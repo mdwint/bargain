@@ -27,7 +27,7 @@ class EMAC(Strategy):
 
     @property
     def backtrack(self):
-        return self._ema_slow.maxlen * 2
+        return self._ema_slow.maxlen * 10
 
     def advance(self, candle):
         price = candle.close
