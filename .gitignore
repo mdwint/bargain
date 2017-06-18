@@ -14,6 +14,7 @@ sdist/
 var/
 venv/
 *.egg-info/
+.cache/
 .installed.cfg
 *.egg
 *.pyc

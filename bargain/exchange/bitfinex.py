@@ -25,8 +25,8 @@ class Bitfinex(Exchange):
         r.raise_for_status()
         return r.json()
 
-    def get_candles(self, pair, interval, now, history):
-        limit = history.total_seconds() / interval.total_seconds()
+    def get_candles(self, pair, interval, now, limit):
+        history = interval * limit
 
         raw = self._get('/candles/trade:{interval}:t{symbol_from}{symbol_to}/hist',
                         interval=self._period(interval), symbol_from=pair[0].name, symbol_to=pair[1].name,

@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 
 
 log = logging.getLogger(__name__)
@@ -13,11 +14,7 @@ class Bot:
         self._history = history
 
     def trade(self, strategy, pair):
-        candles = self._exchange.get_candles(pair, self._interval, self._now, self._history)
+        get_candles = partial(self._exchange.get_candles, pair, self._interval, self._now)
 
-        for candle in candles:
-            log.debug(candle)
-
-        # TODO
-        signal = strategy.emit_signal(candles)
-        log.info(signal.name)
+        signal = strategy.emit_signal(get_candles)
+        log.info('%s signal emitted' % (signal.name if signal else 'No'))
