@@ -34,7 +34,9 @@ provider:
 
 package:
   include:
-  - exhanges/**
+  - bargain/**
+  exclude:
+  - secrets.yml
 
 functions:
   trade:

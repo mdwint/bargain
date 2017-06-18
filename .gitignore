@@ -19,8 +19,9 @@ venv/
 *.egg
 *.pyc
 
-# Serverless directories
+# Serverless
 .serverless
+secrets.yml
 
 # NPM
 node_modules/
