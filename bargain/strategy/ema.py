@@ -55,8 +55,8 @@ class EMAC(Strategy):
 
     def _report(self, candle, a, b, c, d):
         log.debug('{1} {0} {1}'.format(candle.time, '=' * 5))
-        log.debug('fast(%d): %.5f -> %.5f' % (self._ema_fast.maxlen, a, b))
-        log.debug('slow(%d): %.5f -> %.5f' % (self._ema_slow.maxlen, c, d))
+        log.debug('fast(%d): %.5g -> %.5g' % (self._ema_fast.maxlen, a, b))
+        log.debug('slow(%d): %.5g -> %.5g' % (self._ema_slow.maxlen, c, d))
 
         # TODO: Refactor
         self._plot_ema_fast.append(b)

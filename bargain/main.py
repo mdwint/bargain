@@ -3,6 +3,8 @@ import logging
 from collections import namedtuple
 from datetime import datetime, timedelta
 
+import yaml
+
 from bargain.bot import Bot
 from bargain.exchange.bitfinex import Bitfinex
 from bargain.currency import Currency
@@ -28,14 +30,23 @@ def cli_handler():
     p = argparse.ArgumentParser('bargain')
     p.add_argument('--debug', action='store_true', help='Show debug output')
     p.add_argument('--chart', action='store_true', help='Show chart')
+    p.add_argument('--secrets', metavar='PATH', default='secrets.yml', help='Path to secrets.yml')
     p.add_argument('--backtrack', type=int, default=0, help='Number of intervals to backtrack')
     args = p.parse_args()
 
-    # TODO: Parse CLI arguments
+    with open(args.secrets) as f:
+        secrets = yaml.safe_load(f)
+
+    bfx_secrets = secrets['exchanges']['bitfinex']
+    exchange = Bitfinex(bfx_secrets['api_key'], bfx_secrets['api_secret'])
+
+    interval = timedelta(minutes=5)
+    pair = (Currency.ETH, Currency.USD)
+    strategy = EMAC(13, 49)
+
     config = Config(debug=args.debug, chart=args.chart, backtrack=args.backtrack,
-                    interval=timedelta(minutes=5), now=datetime.utcnow(),
-                    pair=(Currency.ETH, Currency.USD), exchange=Bitfinex(),
-                    strategy=EMAC(13, 49))
+                    interval=interval, now=datetime.utcnow(),
+                    exchange=exchange, pair=pair, strategy=strategy)
     main(config)
 
 
