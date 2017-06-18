@@ -18,42 +18,46 @@ class EMAC(Strategy):
 
     """
     def __init__(self, length_fast, length_slow):
-        self._length_fast = length_fast
-        self._length_slow = length_slow
+        self._ema_fast = deque(maxlen=length_fast)
+        self._ema_slow = deque(maxlen=length_slow)
 
-    @staticmethod
-    def ema(prices, length):
-        """Calculates the exponential moving average of given length over prices.
+        # TODO: Refactor
+        self._plot_ema_fast = []
+        self._plot_ema_slow = []
 
-        Args:
-            prices (iterable): Prices to calculate EMA for
-            length (int): Length of EMA
+    @property
+    def backtrack(self):
+        return self._ema_slow.maxlen * 2
 
-        Returns:
-            :obj:`tuple` of :obj:`float`: The last two EMA values, to be used for crossover check
+    def advance(self, candle):
+        price = candle.close
 
-        """
-        assert len(prices) >= length
-        head, *tail = prices
+        def update(ema):
+            k = 2 / (ema.maxlen + 1)
+            ema.append(price * k + ema[-1] * (1 - k) if ema else price)
 
-        k = 2 / (length + 1)
-        ema = deque([head], length)
+            tail = list(ema)[-2:]
+            return tail if len(tail) > 1 else tail * 2
 
-        for price in tail:
-            ema.append(price * k + ema[-1] * (1 - k))
+        a, b = update(self._ema_fast)
+        c, d = update(self._ema_slow)
 
-        return list(ema)[-2:]
+        self._report(candle, a, b, c, d)
 
-    def emit_signal(self, get_candles):
-        prices = [candle.close for candle in get_candles(limit=self._length_slow * 2)]
-
-        a, b = self.ema(prices, self._length_fast)
-        c, d = self.ema(prices, self._length_slow)
-
-        log.debug('fast(%d): %.2f -> %.2f' % (self._length_fast, a, b))
-        log.debug('slow(%d): %.2f -> %.2f' % (self._length_slow, c, d))
+        if len(self._ema_slow) < self._ema_slow.maxlen:
+            # Need more data before emitting signals
+            return
 
         if a < c and b > d:
-            return Signal.BUY
+            yield Signal.BUY
         elif a > c and b < d:
-            return Signal.SELL
+            yield Signal.SELL
+
+    def _report(self, candle, a, b, c, d):
+        log.debug('{1} {0} {1}'.format(candle.time, '=' * 5))
+        log.debug('fast(%d): %.5f -> %.5f' % (self._ema_fast.maxlen, a, b))
+        log.debug('slow(%d): %.5f -> %.5f' % (self._ema_slow.maxlen, c, d))
+
+        # TODO: Refactor
+        self._plot_ema_fast.append(b)
+        self._plot_ema_slow.append(d)

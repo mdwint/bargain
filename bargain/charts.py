@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+
+
 class Candle:
 
     def __init__(self, time, open, close, high, low, volume):
@@ -11,3 +14,11 @@ class Candle:
     def __repr__(self):
         return '{time} [O={open:.2f}] [C={close:.2f}] [H={high:.2f}] [L={low:.2f}]'.format(
             time=self.time.strftime('%Y-%m-%d %H:%M'), open=self.open, close=self.close, high=self.high, low=self.low)
+
+
+def emac_chart(candles, ema_fast, ema_slow):
+    fig, ax = plt.subplots()
+    plt.plot([c.close for c in candles])
+    plt.plot(ema_slow)
+    plt.plot(ema_fast)
+    plt.show()

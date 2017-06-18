@@ -1,2 +1,6 @@
 class Strategy:
-    pass
+
+    backtrack = 0
+
+    def advance(self, candle):
+        raise NotImplementedError()

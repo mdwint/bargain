@@ -1,5 +1,6 @@
 import logging
-from functools import partial
+
+from bargain.charts import emac_chart
 
 
 log = logging.getLogger(__name__)
@@ -7,14 +8,19 @@ log = logging.getLogger(__name__)
 
 class Bot:
 
-    def __init__(self, exchange, now, interval, history):
+    def __init__(self, exchange, now, interval, backtrack):
         self._exchange = exchange
         self._now = now
         self._interval = interval
-        self._history = history
+        self._backtrack = backtrack
 
-    def trade(self, strategy, pair):
-        get_candles = partial(self._exchange.get_candles, pair, self._interval, self._now)
+    def trade(self, strategy, pair, chart=False):
+        backtrack = self._backtrack + strategy.backtrack
+        candles = self._exchange.get_candles(pair, self._interval, self._now, backtrack)
 
-        signal = strategy.emit_signal(get_candles)
-        log.info('%s signal emitted' % (signal.name if signal else 'No'))
+        for candle in candles:
+            for signal in strategy.advance(candle):
+                log.info('{1} {0} {1}'.format(signal.name, '#' * 18))
+
+        if chart:
+            emac_chart(candles, strategy._plot_ema_fast, strategy._plot_ema_slow)
