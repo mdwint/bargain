@@ -15,43 +15,41 @@ logging.basicConfig()
 log = logging.getLogger()
 
 
-Config = namedtuple('Config', 'debug, chart, interval, backtrack, now, pair, exchange, strategy')
+Config = namedtuple('Config', 'debug, dryrun, interval, now, pair, exchange, trade_ratio, strategy')
 
 
 def serverless_handler(event, context):
     # TODO: Parse event
-    config = Config(debug=True, interval=timedelta(minutes=15), backtrack=1,
+    config = Config(debug=True, dryrun=False, interval=timedelta(minutes=15),
                     now=datetime.utcnow(), pair=(Currency.XRP, Currency.USD),
-                    exchange=Bitfinex(), strategy=EMAC(13, 49), chart=False)
+                    exchange=Bitfinex(), strategy=EMAC(13, 49))
     main(config)
 
 
 def cli_handler():
     p = argparse.ArgumentParser('bargain')
     p.add_argument('--debug', action='store_true', help='Show debug output')
-    p.add_argument('--chart', action='store_true', help='Show chart')
+    p.add_argument('--dryrun', metavar='N', type=int, default=0, help='Dry run over N intervals')
     p.add_argument('--secrets', metavar='PATH', default='secrets.yml', help='Path to secrets.yml')
-    p.add_argument('--backtrack', type=int, default=0, help='Number of intervals to backtrack')
+    p.add_argument('--pair', metavar='SYMBOL', nargs=2, type=lambda s: Currency[s.upper()], required=True, help='Currency pair to trade')
+    p.add_argument('--ratio', type=float, default=0.95, help='Ratio to trade between currencies')
     args = p.parse_args()
 
     with open(args.secrets) as f:
         secrets = yaml.safe_load(f)
 
-    bfx_secrets = secrets['exchanges']['bitfinex']
-    exchange = Bitfinex(bfx_secrets['api_key'], bfx_secrets['api_secret'])
-
+    exchange = Bitfinex(**secrets['exchanges']['bitfinex'])
     interval = timedelta(minutes=5)
-    pair = (Currency.ETH, Currency.USD)
     strategy = EMAC(13, 49)
 
-    config = Config(debug=args.debug, chart=args.chart, backtrack=args.backtrack,
-                    interval=interval, now=datetime.utcnow(),
-                    exchange=exchange, pair=pair, strategy=strategy)
+    config = Config(debug=args.debug, dryrun=args.dryrun,
+                    interval=interval, now=datetime.utcnow(), exchange=exchange,
+                    pair=args.pair, trade_ratio=args.ratio, strategy=strategy)
     main(config)
 
 
 def main(config):
     log.setLevel(logging.DEBUG if config.debug else logging.INFO)
 
-    bot = Bot(config.exchange, config.now, config.interval, config.backtrack)
-    bot.trade(config.strategy, config.pair, config.chart)
+    bot = Bot(config.dryrun, config.exchange, config.now, config.interval)
+    bot.trade(config.strategy, config.pair, config.trade_ratio)

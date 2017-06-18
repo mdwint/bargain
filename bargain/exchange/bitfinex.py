@@ -1,18 +1,20 @@
 import hmac
 import json
 import requests
+from base64 import b64encode
 from datetime import datetime
 
 from bargain.charts import Candle
+from bargain.currency import Currency
 from bargain.exchange import Exchange
 from bargain.utils import dt, ms
 
 
 class Bitfinex(Exchange):
 
-    _base = 'https://api.bitfinex.com/v2'
+    _base = 'https://api.bitfinex.com'
 
-    def __init__(self, api_key, api_secret):
+    def __init__(self, api_key=None, api_secret=None):
         self._api_key = api_key
         self._api_secret = api_secret
 
@@ -26,28 +28,57 @@ class Bitfinex(Exchange):
             3600: '1h',
         }.get(interval.total_seconds())
 
+    @staticmethod
+    def _raise_or_return(r):
+        try:
+            r.raise_for_status()
+        except:
+            raise RuntimeError(r.text)
+        return r.json()
+
     def _get(self, path, **kwargs):
         params = kwargs.pop('params', {})
 
         r = requests.get(self._base + path.format(**kwargs), params=params)
-        r.raise_for_status()
-        return r.json()
+        return self._raise_or_return(r)
 
     def _signed_post(self, path, **kwargs):
         params = kwargs.pop('params', {})
+        form = kwargs.pop('data', {})
         body = kwargs.pop('json', {})
-        headers = self._signature_headers(path, body)
+        nonce = datetime.utcnow().timestamp()
 
-        r = requests.post(self._base + path.format(**kwargs), params=params, json=body, headers=headers)
-        r.raise_for_status()
-        return r.json()
+        if path.startswith('/v1'):
+            headers = self._sign_v1(path, form, nonce)
+        elif path.startswith('/v2'):
+            headers = self._sign_v2(path, body, nonce)
+        else:
+            raise ValueError('Invalid path: %s' % path)
 
-    def _signature_headers(self, path, body, nonce=datetime.utcnow().timestamp()):
-        msg = '/api/v2/%s%s%s' % (path.lstrip('/'), nonce, json.dumps(body))
-        h = hmac.new(self._api_secret.encode('utf-8'), msg.encode('utf-8'), 'sha384')
+        r = requests.post(self._base + path.format(**kwargs), params=params, data=form, json=body, headers=headers)
+        return self._raise_or_return(r)
+
+    def _sign_v1(self, path, form, nonce):
+        body = {
+            'request': path,
+            'nonce': str(nonce)
+        }
+
+        body.update(form)
+        payload = b64encode(json.dumps(body).encode('utf-8'))
+        h = hmac.new(self._api_secret.encode('utf-8'), payload, 'sha384')
 
         return {
-            'Content-Type': 'application/json',
+            'X-BFX-APIKEY': self._api_key,
+            'X-BFX-PAYLOAD': payload,
+            'X-BFX-SIGNATURE': h.hexdigest()
+        }
+
+    def _sign_v2(self, path, body, nonce):
+        payload = '/api%s%s%s' % (path, nonce, json.dumps(body))
+        h = hmac.new(self._api_secret.encode('utf-8'), payload.encode('utf-8'), 'sha384')
+
+        return {
             'bfx-nonce': str(nonce),
             'bfx-apikey': self._api_key,
             'bfx-signature': h.hexdigest()
@@ -56,11 +87,22 @@ class Bitfinex(Exchange):
     def get_candles(self, pair, interval, now, limit):
         history = interval * limit
 
-        raw = self._get('/candles/trade:{interval}:t{symbol_from}{symbol_to}/hist',
+        raw = self._get('/v2/candles/trade:{interval}:t{symbol_from}{symbol_to}/hist',
                         interval=self._period(interval), symbol_from=pair[0].name, symbol_to=pair[1].name,
                         params={'start': ms(now - history), 'end': ms(now), 'limit': limit, 'sort': 1})
 
         return [Candle(dt(c[0]), c[1], c[2], c[3], c[4], c[5]) for c in raw]
 
-    def get_orders(self):
-        return self._signed_post('/auth/r/orders')
+    def get_wallet_balances(self):
+        raw = self._signed_post('/v1/balances')
+        return {Currency[b['currency'].upper()]: float(b['amount']) for b in raw}
+
+    def place_order(self, pair, signal, amount):
+        return self._signed_post('/v1/order/new', data={
+            'exchange': 'bitfinex',
+            'symbol': ''.join(s.name.lower() for s in pair),
+            'side': signal.name.lower(),
+            'amount': str(amount),
+            'type': 'exchange market',
+            'price': '1'  # Ignored; market price
+        })
