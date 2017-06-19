@@ -13,3 +13,9 @@ def test_get_candles(now, bitfinex):
 
     assert len(candles) == limit
     assert sorted(candles, key=attrgetter('time')) == candles
+
+
+def test_get_ticker(bitfinex):
+    pair = (Currency.ETH, Currency.USD)
+    ticker = bitfinex.get_ticker(pair)
+    assert ticker

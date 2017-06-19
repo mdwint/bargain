@@ -1,6 +1,7 @@
 import logging
 
 from bargain.charts import emac_chart
+from bargain.signal import Signal
 
 
 log = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ class Bot:
             for signal in strategy.advance(candle):
                 log.info('{1} {0} {1}'.format(signal.name, '#' * 18))
 
-                # TODO: Refactor
+                # TODO: Refactor; add safeties
                 if not self._dryrun and candle == candles[-1]:
                     order = self._order(pair, signal, ratio)
                     log.info(order)
@@ -32,8 +33,14 @@ class Bot:
 
     def _order(self, pair, signal, ratio):
         balances = self._exchange.get_wallet_balances()
-        currency = pair[0]
-        amount = balances.get(currency, 0) * ratio
 
-        log.info('%s %.5g %s', signal.name, amount, currency.name)
+        if signal == Signal.BUY:
+            ticker = self._exchange.get_ticker(pair)
+            max_amount = balances.get(pair[1], 0) * ticker.ask
+        elif signal == Signal.SELL:
+            max_amount = balances.get(pair[0], 0)
+
+        amount = max_amount * ratio
+
+        log.info('%s %.5g %s', signal.name, amount, pair[0].name)
         return self._exchange.place_order(pair, signal, amount)

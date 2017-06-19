@@ -6,7 +6,7 @@ from datetime import datetime
 
 from bargain.charts import Candle
 from bargain.currency import Currency
-from bargain.exchange import Exchange
+from bargain.exchange import Exchange, Ticker
 from bargain.utils import dt, ms
 
 
@@ -92,6 +92,12 @@ class Bitfinex(Exchange):
                         params={'start': ms(now - history), 'end': ms(now), 'limit': limit, 'sort': 1})
 
         return [Candle(dt(c[0]), c[1], c[2], c[3], c[4], c[5]) for c in raw]
+
+    def get_ticker(self, pair):
+        raw = self._get('/v2/ticker/t{symbol_from}{symbol_to}',
+                        symbol_from=pair[0].name, symbol_to=pair[1].name)
+
+        return Ticker(bid=raw[0], ask=raw[2])
 
     def get_wallet_balances(self):
         raw = self._signed_post('/v1/balances')
