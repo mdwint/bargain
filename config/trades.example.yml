@@ -1,0 +1,7 @@
+trades:
+- schedule:
+    name: bargain-ripple
+    rate: cron(1-59/5 * * * ? *)
+    input:
+      pair: [XRP, USD]
+      interval: 5

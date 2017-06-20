@@ -21,7 +21,7 @@ class Bot:
 
         for candle in candles:
             for signal in strategy.advance(candle):
-                log.info('{1} {0} {1}'.format(signal.name, '#' * 18))
+                log.debug('{1} {0} {1}'.format(signal.name, '#' * 18))
 
                 # TODO: Refactor; add safeties
                 if not self._dryrun and candle == candles[-1]:

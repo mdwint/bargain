@@ -1,6 +1,3 @@
-import matplotlib.pyplot as plt
-
-
 class Candle:
 
     def __init__(self, time, open, close, high, low, volume):
@@ -17,6 +14,12 @@ class Candle:
 
 
 def emac_chart(candles, ema_fast, ema_slow):
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print('Skipping chart (matplotlib not found)')
+        return
+
     fig, ax = plt.subplots()
     plt.plot([c.close for c in candles])
     plt.plot(ema_slow)

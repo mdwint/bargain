@@ -21,10 +21,14 @@ venv/
 
 # Serverless
 .serverless
-secrets.yml
+.requirements*
 
 # NPM
 node_modules/
+
+# Config
+secrets.yml
+trades.yml
 
 # Logs
 *.log

@@ -28,8 +28,11 @@ Serverless setup
 
 ```
 #!bash
-# Edit secrets.yml to add your API key etc.
-cp secrets.example.yml secrets.yml
+# Edit secrets.yml to set your API key and secret
+cp config/secrets.example.yml config/secrets.yml
+
+# Edit trades.yml to configure your trades
+cp config/trades.example.yml config/trades.yml
 
 # Invoke locally
 serverless invoke local -f trade

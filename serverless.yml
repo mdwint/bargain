@@ -1,7 +1,11 @@
 service: bargain
 
-# plugins:
-# - serverless-python-requirements
+plugins:
+- serverless-python-requirements
+
+custom:
+  secrets: ${file(config/secrets.yml)}
+  trades: ${file(config/trades.yml)}
 
 provider:
   name: aws
@@ -36,11 +40,17 @@ package:
   include:
   - bargain/**
   exclude:
-  - secrets.yml
+  - '*__pycache__/**'
+  - config/**
+  - tests/**
 
 functions:
   trade:
     handler: bargain/main.serverless_handler
+    environment:
+      BITFINEX_API_KEY: ${self:custom.secrets.exchanges.bitfinex.api_key}
+      BITFINEX_API_SECRET: ${self:custom.secrets.exchanges.bitfinex.api_secret}
+    events: ${self:custom.trades.trades}
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -66,10 +76,6 @@ functions:
 #              state:
 #                - pending
 #      - cloudwatchLog: '/aws/lambda/hello'
-
-#    Define function environment variables here
-#    environment:
-#      variable2: value2
 
 # you can add CloudFormation resource templates here
 #resources:
