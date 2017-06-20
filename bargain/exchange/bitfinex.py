@@ -103,12 +103,12 @@ class Bitfinex(Exchange):
         raw = self._signed_post('/v1/balances')
         return {Currency[b['currency'].upper()]: float(b['amount']) for b in raw}
 
-    def place_order(self, pair, signal, amount):
+    def place_order(self, pair, signal, amount, price):
         return self._signed_post('/v1/order/new', data={
             'exchange': 'bitfinex',
             'symbol': ''.join(s.name.lower() for s in pair),
             'side': signal.name.lower(),
             'amount': str(amount),
-            'type': 'exchange market',
-            'price': '1'  # Ignored; market price
+            'type': 'exchange limit',
+            'price': str(price)
         })

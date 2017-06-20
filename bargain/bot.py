@@ -33,15 +33,17 @@ class Bot:
             emac_chart(candles, indicator._plot_ema_fast, indicator._plot_ema_slow)
 
     def _order(self, pair, signal, ratio):
+        ticker = self._exchange.get_ticker(pair)
         balances = self._exchange.get_wallet_balances()
 
         if signal == Signal.BUY:
-            ticker = self._exchange.get_ticker(pair)
-            max_amount = balances.get(pair[1], 0) * ticker.ask
+            price = ticker.ask
+            max_amount = balances.get(pair[1], 0) * price
         elif signal == Signal.SELL:
+            price = ticker.bid
             max_amount = balances.get(pair[0], 0)
 
         amount = max_amount * ratio
 
         log.info('%s %.5g %s', signal.name, amount, pair[0].name)
-        return self._exchange.place_order(pair, signal, amount)
+        return self._exchange.place_order(pair, signal, amount, price)
