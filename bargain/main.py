@@ -23,11 +23,11 @@ def serverless_handler(event, context):
     exchange = Bitfinex(os.environ['BITFINEX_API_KEY'], os.environ['BITFINEX_API_SECRET'])
     pair = (Currency[event['pair'][0]], Currency[event['pair'][1]])
 
-    interval = timedelta(minutes=event.get('interval', 15))
+    interval = timedelta(minutes=event['interval'])
     trade_ratio = event.get('trade_ratio', 0.95)
     strategy = EMAC(13, 49)
 
-    config = Config(debug=True, dryrun=False,
+    config = Config(debug=True, dryrun=0,
                     interval=interval, now=datetime.utcnow(), exchange=exchange,
                     pair=pair, trade_ratio=trade_ratio, strategy=strategy)
     main(config)
