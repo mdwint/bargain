@@ -5,7 +5,7 @@ plugins:
 
 custom:
   secrets: ${file(config/secrets.yml)}
-  trades: ${file(config/trades.yml)}
+  schedule: ${file(config/schedule.yml)}
 
 provider:
   name: aws
@@ -50,7 +50,7 @@ functions:
     environment:
       BITFINEX_API_KEY: ${self:custom.secrets.exchanges.bitfinex.api_key}
       BITFINEX_API_SECRET: ${self:custom.secrets.exchanges.bitfinex.api_secret}
-    events: ${self:custom.trades.trades}
+    events: ${self:custom.schedule.trades}
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events

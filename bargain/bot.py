@@ -1,7 +1,7 @@
 import logging
 
 from bargain.charts import emac_chart
-from bargain.signal import Signal
+from bargain.indicator import Signal
 
 
 log = logging.getLogger(__name__)
@@ -15,12 +15,12 @@ class Bot:
         self._now = now
         self._interval = interval
 
-    def trade(self, strategy, pair, ratio):
-        backtrack = self._dryrun + strategy.backtrack
+    def trade(self, indicator, pair, ratio):
+        backtrack = self._dryrun + indicator.backtrack
         candles = self._exchange.get_candles(pair, self._interval, self._now, backtrack)
 
         for candle in candles:
-            for signal in strategy.advance(candle):
+            for signal in indicator.advance(candle):
                 log.debug('{1} {0} {1}'.format(signal.name, '#' * 18))
 
                 # TODO: Refactor; add safeties
@@ -29,7 +29,8 @@ class Bot:
                     log.info(order)
 
         if self._dryrun:
-            emac_chart(candles, strategy._plot_ema_fast, strategy._plot_ema_slow)
+            # TODO: Refactor
+            emac_chart(candles, indicator._plot_ema_fast, indicator._plot_ema_slow)
 
     def _order(self, pair, signal, ratio):
         balances = self._exchange.get_wallet_balances()

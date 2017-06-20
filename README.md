@@ -31,11 +31,11 @@ Serverless setup
 # Edit secrets.yml to set your API key and secret
 cp config/secrets.example.yml config/secrets.yml
 
-# Edit trades.yml to configure your trades
-cp config/trades.example.yml config/trades.yml
+# Edit schedule.yml to configure your trading schedule
+cp config/schedule.example.yml config/schedule.yml
 
 # Invoke locally
-serverless invoke local -f trade
+serverless invoke local -f trade -p config/local.example.json
 
 # Deploy to AWS Lambda
 serverless deploy

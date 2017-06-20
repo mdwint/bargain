@@ -1,25 +1,28 @@
 import logging
 from collections import deque
 
-from bargain.signal import Signal
-from bargain.strategy import Strategy
+from bargain.indicator import Indicator, Signal
 
 
 log = logging.getLogger(__name__)
 
 
-class EMAC(Strategy):
-    """Exponential moving average crossover strategy.
+class EMAC(Indicator):
+    """Exponential moving average crossover indicator.
 
     Calculates the crossover between a short-term and a long-term exponential moving average.
 
     Emits a *BUY* signal when the short-term EMA crosses *over* the long-term EMA, indicating the start of an upward trend.
     Emits a *SELL* signal when the short-term EMA crosses *under* the long-term EMA, indicating the start of a downward trend.
 
+    Args:
+        fast: Length of the short-term EMA
+        slow: Length of the long-term EMA
+
     """
-    def __init__(self, length_fast, length_slow):
-        self._ema_fast = deque(maxlen=length_fast)
-        self._ema_slow = deque(maxlen=length_slow)
+    def __init__(self, fast, slow):
+        self._ema_fast = deque(maxlen=fast)
+        self._ema_slow = deque(maxlen=slow)
 
         # TODO: Refactor
         self._plot_ema_fast = []

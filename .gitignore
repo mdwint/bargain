@@ -28,7 +28,7 @@ node_modules/
 
 # Config
 secrets.yml
-trades.yml
+schedule.yml
 
 # Logs
 *.log

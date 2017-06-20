@@ -1,0 +1,7 @@
+{
+  "pair": ["XRP", "USD"],
+  "interval": 5,
+  "indicator": {
+    "emac": {"fast": 13, "slow": 49}
+  }
+}
