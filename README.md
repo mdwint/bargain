@@ -3,7 +3,7 @@ Bargain is a Serverless cryptocurrency trading bot
 
 > I'd buy that for a dollar!
 
-![I'd buy that for a dollar!](id-buy-that-for-a-dollar.jpg)
+![I'd buy that for a dollar!](cover.jpg)
 
 
 Local setup
@@ -11,8 +11,7 @@ Local setup
 
 [Installing Python 3 on Mac OS X](http://python-guide-pt-br.readthedocs.io/en/latest/starting/install3/osx/ )
 
-```
-#!bash
+```bash
 # Install development version
 pip3 install -e .
 
@@ -26,8 +25,7 @@ Serverless setup
 
 [Serverless AWS Quick Start](https://serverless.com/framework/docs/providers/aws/guide/quick-start/)
 
-```
-#!bash
+```bash
 # Edit secrets.yml to set your API key and secret
 cp config/secrets.example.yml config/secrets.yml
 
