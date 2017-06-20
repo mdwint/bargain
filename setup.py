@@ -15,7 +15,6 @@ setup(
     packages=['bargain'],
 
     install_requires=[
-        'matplotlib',
         'PyYAML',
         'requests',
     ],

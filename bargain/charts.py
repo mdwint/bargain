@@ -1,3 +1,9 @@
+import logging
+
+
+log = logging.getLogger(__name__)
+
+
 class Candle:
 
     def __init__(self, time, open, close, high, low, volume):
@@ -17,7 +23,7 @@ def emac_chart(candles, ema_fast, ema_slow):
     try:
         import matplotlib.pyplot as plt
     except ImportError:
-        print('Skipping chart (matplotlib not found)')
+        log.warning('Rendering charts requires matplotlib (not installed)')
         return
 
     fig, ax = plt.subplots()
