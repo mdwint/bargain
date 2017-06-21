@@ -18,15 +18,21 @@ class Bot:
     def trade(self, indicator, pair, ratio):
         backtrack = self._dryrun + indicator.backtrack
         candles = self._exchange.get_candles(pair, self._interval, self._now, backtrack)
+        signal = None
 
         for candle in candles:
             for signal in indicator.advance(candle):
-                log.debug('{1} {0} {1}'.format(signal.name, '#' * 18))
+                signal_time, signal_price = candle.time, candle.close
+                log.debug('{2} {0} @ {1} {2}'.format(signal.name, signal_price, '#' * 14))
 
-                # TODO: Refactor; add safeties
-                if not self._dryrun and candle == candles[-1]:
-                    order = self._order(pair, signal, ratio)
-                    log.info(order)
+        if signal:
+            past_trades = self._exchange.get_past_trades(pair, since=signal_time, until=self._now, limit=1)
+
+            if past_trades and past_trades[-1].signal == signal:
+                log.debug('Already traded since %s: %s', signal_time, past_trades[-1])
+            else:
+                order = self._order(pair, signal, ratio)
+                if order: log.info(order)
 
         if self._dryrun:
             # TODO: Refactor
@@ -45,5 +51,9 @@ class Bot:
 
         amount = max_amount * ratio
 
-        log.info('%s %.5g %s', signal.name, amount, pair[0].name)
+        log.info('%s %.5g %s for %.5g %s', signal.name, amount, pair[0].name, price, pair[1].name)
+        if self._dryrun:
+            log.info('Skipping order (dry run)')
+            return
+
         return self._exchange.place_order(pair, signal, amount, price)

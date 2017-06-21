@@ -6,7 +6,8 @@ from datetime import datetime
 
 from bargain.charts import Candle
 from bargain.currency import Currency
-from bargain.exchange import Exchange, Ticker
+from bargain.exchange import Exchange, Ticker, Trade
+from bargain.indicator import Signal
 from bargain.utils import dt, ms
 
 
@@ -27,6 +28,10 @@ class Bitfinex(Exchange):
             1800: '30m',
             3600: '1h',
         }.get(interval.total_seconds())
+
+    @staticmethod
+    def _symbol(pair):
+        return ''.join(c.name for c in pair)
 
     @staticmethod
     def _raise_or_return(r):
@@ -87,17 +92,26 @@ class Bitfinex(Exchange):
     def get_candles(self, pair, interval, now, limit):
         history = interval * limit
 
-        raw = self._get('/v2/candles/trade:{interval}:t{symbol_from}{symbol_to}/hist',
-                        interval=self._period(interval), symbol_from=pair[0].name, symbol_to=pair[1].name,
+        raw = self._get('/v2/candles/trade:{interval}:t{symbol}/hist',
+                        interval=self._period(interval), symbol=self._symbol(pair),
                         params={'start': ms(now - history), 'end': ms(now), 'limit': limit, 'sort': 1})
 
         return [Candle(dt(c[0]), c[1], c[2], c[3], c[4], c[5]) for c in raw]
 
     def get_ticker(self, pair):
-        raw = self._get('/v2/ticker/t{symbol_from}{symbol_to}',
-                        symbol_from=pair[0].name, symbol_to=pair[1].name)
+        raw = self._get('/v2/ticker/t{symbol}', symbol=self._symbol(pair))
 
         return Ticker(bid=raw[0], ask=raw[2])
+
+    def get_past_trades(self, pair, since, until, limit):
+        raw = self._signed_post('/v1/mytrades', data={
+            'symbol': self._symbol(pair),
+            'timestamp': str(since.timestamp()),
+            'until': str(until.timestamp()),
+            'limit_trades': limit
+        })
+
+        return [Trade(t['timestamp'], Signal[t['type'].upper()], t['price'], t['amount']) for t in raw]
 
     def get_wallet_balances(self):
         raw = self._signed_post('/v1/balances')
