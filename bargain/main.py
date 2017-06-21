@@ -39,6 +39,7 @@ def cli_handler():
     p.add_argument('--dryrun', metavar='N', type=int, default=0, help='Dry run over N intervals')
     p.add_argument('--secrets', metavar='PATH', default=os.path.join('config', 'secrets.yml'), help='Path to secrets.yml')
     p.add_argument('--pair', metavar='SYMBOL', nargs=2, type=lambda s: Currency[s.upper()], required=True, help='Currency pair to trade')
+    p.add_argument('--interval', type=int, default=5, help='Trading interval in minutes')
     p.add_argument('--ratio', type=float, default=0.95, help='Ratio to trade between currencies')
     p.add_argument('--emac-fast', type=int, default=13, help='Length of the short-term moving average')
     p.add_argument('--emac-slow', type=int, default=49, help='Length of the long-term moving average')
@@ -48,7 +49,7 @@ def cli_handler():
         secrets = yaml.safe_load(f)
 
     exchange = Bitfinex(**secrets['exchanges']['bitfinex'])
-    interval = timedelta(minutes=5)
+    interval = timedelta(minutes=args.interval)
     indicator = EMAC(args.emac_fast, args.emac_slow)
 
     config = Config(debug=args.debug, dryrun=args.dryrun,
