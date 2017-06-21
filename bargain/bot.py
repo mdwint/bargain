@@ -41,15 +41,7 @@ class Bot:
     def _order(self, pair, signal, ratio):
         ticker = self._exchange.get_ticker(pair)
         balances = self._exchange.get_wallet_balances()
-
-        if signal == Signal.BUY:
-            price = ticker.ask
-            max_amount = balances.get(pair[1], 0) * price
-        elif signal == Signal.SELL:
-            price = ticker.bid
-            max_amount = balances.get(pair[0], 0)
-
-        amount = max_amount * ratio
+        amount, price = self._calc_trade_amount_and_price(pair, signal, ticker, balances, ratio)
 
         log.info('%s %.5g %s for %.5g %s', signal.name, amount, pair[0].name, price, pair[1].name)
         if self._dryrun:
@@ -57,3 +49,14 @@ class Bot:
             return
 
         return self._exchange.place_order(pair, signal, amount, price)
+
+    @staticmethod
+    def _calc_trade_amount_and_price(pair, signal, ticker, balances, ratio):
+        if signal == Signal.BUY:
+            price = ticker.ask
+            max_amount = balances.get(pair[1], 0) / price
+        elif signal == Signal.SELL:
+            price = ticker.bid
+            max_amount = balances.get(pair[0], 0)
+
+        return max_amount * ratio, price
