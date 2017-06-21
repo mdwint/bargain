@@ -1,9 +1,14 @@
-from enum import Enum
+from enum import Enum, auto
 
 
 class Currency(Enum):
-    USD = 0
-    BTC = 1
-    ETH = 2
-    XRP = 3
-    IOT = 4
+    USD = auto()
+    BTC = auto()
+    LTC = auto()
+    ETH = auto()
+    ETC = auto()
+    ZEC = auto()
+    XMR = auto()
+    DASH = auto()
+    XRP = auto()
+    IOT = auto()

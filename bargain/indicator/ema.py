@@ -21,6 +21,8 @@ class EMAC(Indicator):
 
     """
     def __init__(self, fast, slow):
+        assert fast < slow
+
         self._ema_fast = deque(maxlen=fast)
         self._ema_slow = deque(maxlen=slow)
 
