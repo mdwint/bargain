@@ -27,7 +27,7 @@ def serverless_handler(event, context):
     trade_ratio = event.get('trade_ratio', 0.95)
     indicator = EMAC(**event['indicator']['emac'])
 
-    config = Config(debug=True, dryrun=0,
+    config = Config(debug=False, dryrun=0,
                     interval=interval, now=datetime.utcnow(), exchange=exchange,
                     pair=pair, trade_ratio=trade_ratio, indicator=indicator)
     main(config)
