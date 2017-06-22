@@ -2,7 +2,7 @@ import argparse
 import logging
 import os
 from collections import namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import yaml
 
@@ -27,9 +27,9 @@ def serverless_handler(event, context):
     trade_ratio = event.get('trade_ratio', 1)
     indicator = EMAC(**event['indicator']['emac'])
 
-    config = Config(debug=False, dryrun=0,
-                    interval=interval, now=datetime.utcnow(), exchange=exchange,
-                    pair=pair, trade_ratio=trade_ratio, indicator=indicator)
+    config = Config(debug=False, dryrun=0, now=datetime.now(timezone.utc),
+                    interval=interval, exchange=exchange, pair=pair,
+                    trade_ratio=trade_ratio, indicator=indicator)
     main(config)
 
 
@@ -52,9 +52,9 @@ def cli_handler():
     interval = timedelta(minutes=args.interval)
     indicator = EMAC(args.emac_fast, args.emac_slow)
 
-    config = Config(debug=args.debug, dryrun=args.dryrun,
-                    interval=interval, now=datetime.utcnow(), exchange=exchange,
-                    pair=args.pair, trade_ratio=args.ratio, indicator=indicator)
+    config = Config(debug=args.debug, dryrun=args.dryrun, now=datetime.now(timezone.utc),
+                    interval=interval, exchange=exchange, pair=args.pair,
+                    trade_ratio=args.ratio, indicator=indicator)
     main(config)
 
 

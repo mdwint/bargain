@@ -2,7 +2,7 @@ import hmac
 import json
 import requests
 from base64 import b64encode
-from datetime import datetime
+from datetime import datetime, timezone
 
 from bargain.charts import Candle
 from bargain.currency import Currency
@@ -51,7 +51,7 @@ class Bitfinex(Exchange):
         params = kwargs.pop('params', {})
         form = kwargs.pop('data', {})
         body = kwargs.pop('json', {})
-        nonce = datetime.utcnow().timestamp()
+        nonce = datetime.now(timezone.utc).timestamp()
 
         if path.startswith('/v1'):
             headers = self._sign_v1(path, form, nonce)
