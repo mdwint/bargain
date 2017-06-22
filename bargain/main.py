@@ -24,7 +24,7 @@ def serverless_handler(event, context):
     pair = (Currency[event['pair'][0]], Currency[event['pair'][1]])
 
     interval = timedelta(minutes=event['interval'])
-    trade_ratio = event.get('trade_ratio', 0.95)
+    trade_ratio = event.get('trade_ratio', 1)
     indicator = EMAC(**event['indicator']['emac'])
 
     config = Config(debug=False, dryrun=0,
@@ -40,7 +40,7 @@ def cli_handler():
     p.add_argument('--secrets', metavar='PATH', default=os.path.join('config', 'secrets.yml'), help='Path to secrets.yml')
     p.add_argument('--pair', metavar='SYMBOL', nargs=2, type=lambda s: Currency[s.upper()], required=True, help='Currency pair to trade')
     p.add_argument('--interval', type=int, default=5, help='Trading interval in minutes')
-    p.add_argument('--ratio', type=float, default=0.95, help='Ratio to trade between currencies')
+    p.add_argument('--ratio', type=float, default=1, help='Ratio to trade between currencies')
     p.add_argument('--emac-fast', type=int, default=13, help='Length of the short-term moving average')
     p.add_argument('--emac-slow', type=int, default=49, help='Length of the long-term moving average')
     args = p.parse_args()
