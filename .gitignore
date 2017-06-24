@@ -19,6 +19,9 @@ venv/
 *.egg
 *.pyc
 
+# IDE
+.vscode/
+
 # Serverless
 .serverless
 .requirements*
