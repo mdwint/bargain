@@ -12,10 +12,12 @@ class RSI(Indicator):
     def __init__(self, length, low=30, high=70):
         self._gain = deque(maxlen=length)
         self._loss = deque(maxlen=length)
-        self._prev_price = 0
 
         self._low = low
         self._high = high
+
+        self._prev_price = 0
+        self._prev_rsi = 50
 
         # TODO: Refactor
         self._plot_rsi = []
@@ -56,10 +58,12 @@ class RSI(Indicator):
             # Need more data before emitting signals
             return
 
-        if rsi < self._low:
+        if rsi < self._low < self._prev_rsi:
             yield Signal.BUY
-        elif rsi > self._high:
+        elif rsi > self._high > self._prev_rsi:
             yield Signal.SELL
+
+        self._prev_rsi = rsi
 
     def _report(self, candle, rsi):
         log.debug('{1} {0} {1}'.format(candle.time, '=' * 5))

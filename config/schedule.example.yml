@@ -1,9 +1,9 @@
 trades:
 - schedule:
-    name: bargain-ripple
+    name: bargain-ether
     rate: cron(1-59/5 * * * ? *)
     input:
-      pair: [XRP, USD]
+      pair: [ETH, USD]
       interval: 5
       indicator:
         emac: {fast: 13, slow: 49}
