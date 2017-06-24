@@ -31,7 +31,8 @@ node_modules/
 
 # Config
 secrets.yml
-schedule.yml
+config/schedule.yml
+config/local.json
 
 # Logs
 *.log
