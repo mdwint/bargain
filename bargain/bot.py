@@ -28,7 +28,7 @@ class Bot:
         if signal:
             past_trades = self._exchange.get_past_trades(pair, since=signal_time, until=self._now, limit=1)
 
-            if past_trades and past_trades[-1].signal == signal:
+            if past_trades:  # and past_trades[-1].signal == signal:
                 log.debug('Already traded since %s: %s', signal_time, past_trades[-1])
             else:
                 order = self._order(pair, signal, ratio)
@@ -36,8 +36,8 @@ class Bot:
 
         if self._dryrun:
             # TODO: Refactor
-            # show_chart(bot.candles, indicator._plot_ema_fast, indicator._plot_ema_slow)
-            show_chart(candles, indicator._plot_rsi)
+            show_chart(candles, indicator._plot_ema_fast, indicator._plot_ema_slow)
+            # show_chart(candles, indicator._plot_rsi)
 
     def _order(self, pair, signal, ratio):
         ticker = self._exchange.get_ticker(pair)

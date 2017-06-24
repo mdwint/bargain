@@ -53,8 +53,8 @@ def cli_handler():
 
     exchange = Bitfinex(**secrets['exchanges']['bitfinex'])
     interval = timedelta(minutes=args.interval)
-    # indicator = EMAC(args.emac_fast, args.emac_slow)
-    indicator = RSI(args.rsi_length)
+    indicator = EMAC(args.emac_fast, args.emac_slow)
+    # indicator = RSI(args.rsi_length)
 
     config = Config(debug=args.debug, dryrun=args.dryrun, now=datetime.now(timezone.utc),
                     interval=interval, exchange=exchange, pair=args.pair,

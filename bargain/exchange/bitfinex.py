@@ -122,7 +122,7 @@ class Bitfinex(Exchange):
             'exchange': 'bitfinex',
             'symbol': ''.join(s.name.lower() for s in pair),
             'side': signal.name.lower(),
-            'amount': '%.f' % amount,
+            'amount': '%.8f' % amount,
             'type': 'exchange limit',
-            'price': '%.f' % price
+            'price': '%.5g' % price
         })
