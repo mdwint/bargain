@@ -10,7 +10,7 @@ from bargain.bot import Bot
 from bargain.exchange.bitfinex import Bitfinex
 from bargain.currency import Currency
 from bargain.indicator.momentum import RSI
-# from bargain.indicator.trend import EMAC
+from bargain.indicator.trend import EMAC
 
 
 logging.basicConfig()
@@ -26,8 +26,8 @@ def serverless_handler(event, context):
 
     interval = timedelta(minutes=event['interval'])
     trade_ratio = event.get('trade_ratio', 1)
-    # indicator = EMAC(**event['indicator']['emac'])
-    indicator = RSI(**event['indicator']['rsi'])
+    indicator = EMAC(**event['indicator']['emac'])
+    # indicator = RSI(**event['indicator']['rsi'])
 
     config = Config(debug=False, dryrun=0, now=datetime.now(timezone.utc),
                     interval=interval, exchange=exchange, pair=pair,
