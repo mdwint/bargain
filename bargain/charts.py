@@ -19,15 +19,24 @@ class Candle:
             time=self.time.strftime('%Y-%m-%d %H:%M'), open=self.open, close=self.close, high=self.high, low=self.low)
 
 
-def emac_chart(candles, ema_fast, ema_slow):
+def show_chart(candles, *args):
     try:
         import matplotlib.pyplot as plt
+        from matplotlib.dates import DateFormatter, HourLocator
     except ImportError:
         log.warning('Rendering charts requires matplotlib (not installed)')
         return
 
     fig, ax = plt.subplots()
-    plt.plot([c.close for c in candles])
-    plt.plot(ema_slow)
-    plt.plot(ema_fast)
+    ax.xaxis.set_major_locator(HourLocator())
+    ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+    dates = [c.time for c in candles]
+
+    # plt.plot(dates, [c.close for c in candles])
+    for series in args:
+        plt.plot(dates, series)
+
+    ax.xaxis_date()
+    ax.autoscale_view()
+    plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
     plt.show()

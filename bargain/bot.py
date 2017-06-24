@@ -1,6 +1,6 @@
 import logging
 
-from bargain.charts import emac_chart
+from bargain.charts import show_chart
 from bargain.indicator import Signal
 
 
@@ -36,7 +36,8 @@ class Bot:
 
         if self._dryrun:
             # TODO: Refactor
-            emac_chart(candles, indicator._plot_ema_fast, indicator._plot_ema_slow)
+            # show_chart(bot.candles, indicator._plot_ema_fast, indicator._plot_ema_slow)
+            show_chart(candles, indicator._plot_rsi)
 
     def _order(self, pair, signal, ratio):
         ticker = self._exchange.get_ticker(pair)

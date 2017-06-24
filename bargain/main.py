@@ -9,7 +9,8 @@ import yaml
 from bargain.bot import Bot
 from bargain.exchange.bitfinex import Bitfinex
 from bargain.currency import Currency
-from bargain.indicator.ema import EMAC
+from bargain.indicator.momentum import RSI
+from bargain.indicator.trend import EMAC
 
 
 logging.basicConfig()
@@ -43,6 +44,7 @@ def cli_handler():
     p.add_argument('--ratio', type=float, default=1, help='Ratio to trade between currencies')
     p.add_argument('--emac-fast', type=int, default=13, help='Length of the short-term moving average')
     p.add_argument('--emac-slow', type=int, default=49, help='Length of the long-term moving average')
+    p.add_argument('--rsi-length', type=int, default=14, help='Length of the relative strength index')
     args = p.parse_args()
 
     with open(args.secrets) as f:
@@ -50,7 +52,8 @@ def cli_handler():
 
     exchange = Bitfinex(**secrets['exchanges']['bitfinex'])
     interval = timedelta(minutes=args.interval)
-    indicator = EMAC(args.emac_fast, args.emac_slow)
+    # indicator = EMAC(args.emac_fast, args.emac_slow)
+    indicator = RSI(args.rsi_length)
 
     config = Config(debug=args.debug, dryrun=args.dryrun, now=datetime.now(timezone.utc),
                     interval=interval, exchange=exchange, pair=args.pair,
