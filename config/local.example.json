@@ -2,6 +2,6 @@
   "pair": ["ETH", "USD"],
   "interval": 5,
   "indicator": {
-    "emac": {"fast": 13, "slow": 49}
+    "zlemac": {"fast": 41, "slow": 91}
   }
 }

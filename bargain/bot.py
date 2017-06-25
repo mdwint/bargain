@@ -36,7 +36,7 @@ class Bot:
 
         if self._dryrun:
             # TODO: Refactor
-            show_chart(candles, indicator._plot_ema_fast, indicator._plot_ema_slow)
+            show_chart(candles, indicator._plot_ema_slow, indicator._plot_ema_fast)
             # show_chart(candles, indicator._plot_rsi)
 
     def _order(self, pair, signal, ratio):

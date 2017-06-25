@@ -7,10 +7,10 @@ from bargain.indicator import Indicator, Signal
 log = logging.getLogger(__name__)
 
 
-class EMAC(Indicator):
-    """Exponential moving average crossover indicator.
+class ZLEMAC(Indicator):
+    """Zero-Lag Exponential Moving Average Crossover indicator.
 
-    Calculates the crossover between a short-term and a long-term exponential moving average.
+    Calculates the crossover between a short-term and a long-term zero-lag exponential moving average.
 
     Emits a *BUY* signal when the short-term EMA crosses *over* the long-term EMA, indicating the start of an upward trend.
     Emits a *SELL* signal when the short-term EMA crosses *under* the long-term EMA, indicating the start of a downward trend.
@@ -25,6 +25,7 @@ class EMAC(Indicator):
 
         self._ema_fast = deque(maxlen=fast)
         self._ema_slow = deque(maxlen=slow)
+        self._prices = deque(maxlen=slow)
 
         # TODO: Refactor
         self._plot_ema_fast = []
@@ -38,8 +39,15 @@ class EMAC(Indicator):
         price = candle.close
 
         def update(ema):
-            k = 2 / (ema.maxlen + 1)
-            ema.append(price * k + ema[-1] * (1 - k) if ema else price)
+            length = ema.maxlen
+            lag = int((length - 1) / 2)
+
+            correction = price - self._prices[-lag] if len(self._prices) >= lag else 0
+            price_zlag = price + correction
+            self._prices.append(price)
+
+            k = 2 / (length + 1)
+            ema.append(price_zlag * k + ema[-1] * (1 - k) if ema else price_zlag)
 
             tail = list(ema)[-2:]
             return tail if len(tail) > 1 else tail * 2

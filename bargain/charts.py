@@ -32,7 +32,7 @@ def show_chart(candles, *args):
     ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
     dates = [c.time for c in candles]
 
-    # plt.plot(dates, [c.close for c in candles])
+    plt.plot(dates, [c.close for c in candles])
     for series in args:
         plt.plot(dates, series)
 
