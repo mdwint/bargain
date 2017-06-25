@@ -9,8 +9,8 @@ import yaml
 from bargain.bot import Bot
 from bargain.exchange.bitfinex import Bitfinex
 from bargain.currency import Currency
-# from bargain.indicator.momentum import RSI
-from bargain.indicator.trend import ZLEMAC
+from bargain.indicator import Crossover
+from bargain.indicator.trend import ALMA
 
 
 logging.basicConfig()
@@ -26,8 +26,10 @@ def serverless_handler(event, context):
 
     interval = timedelta(minutes=event['interval'])
     trade_ratio = event.get('trade_ratio', 1)
-    indicator = ZLEMAC(**event['indicator']['zlemac'])
-    # indicator = RSI(**event['indicator']['rsi'])
+
+    args = event['indicator']['crossover']
+    indicator = Crossover(buy_indicator=ALMA(**args['buy']['alma']),
+                          sell_indicator=ALMA(**args['sell']['alma']))
 
     config = Config(debug=False, dryrun=0, now=datetime.now(timezone.utc),
                     interval=interval, exchange=exchange, pair=pair,
@@ -43,8 +45,8 @@ def cli_handler():
     p.add_argument('--pair', metavar='SYMBOL', nargs=2, type=lambda s: Currency[s.upper()], required=True, help='Currency pair to trade')
     p.add_argument('--interval', type=int, default=5, help='Trading interval in minutes')
     p.add_argument('--ratio', type=float, default=1, help='Ratio to trade between currencies')
-    p.add_argument('--ema-fast', type=int, default=13, help='Length of the short-term moving average')
-    p.add_argument('--ema-slow', type=int, default=49, help='Length of the long-term moving average')
+    p.add_argument('--avg-fast', type=int, default=13, help='Length of the short-term moving average')
+    p.add_argument('--avg-slow', type=int, default=49, help='Length of the long-term moving average')
     p.add_argument('--rsi-length', type=int, default=14, help='Length of the relative strength index')
     args = p.parse_args()
 
@@ -53,8 +55,9 @@ def cli_handler():
 
     exchange = Bitfinex(**secrets['exchanges']['bitfinex'])
     interval = timedelta(minutes=args.interval)
-    indicator = ZLEMAC(args.ema_fast, args.ema_slow)
-    # indicator = RSI(args.rsi_length)
+
+    indicator = Crossover(buy_indicator=ALMA(args.avg_fast),
+                          sell_indicator=ALMA(args.avg_slow))
 
     config = Config(debug=args.debug, dryrun=args.dryrun, now=datetime.now(timezone.utc),
                     interval=interval, exchange=exchange, pair=args.pair,

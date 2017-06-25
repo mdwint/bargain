@@ -1,76 +1,62 @@
 import logging
+import math
 from collections import deque
 
-from bargain.indicator import Indicator, Signal
+from bargain.indicator import Indicator
 
 
 log = logging.getLogger(__name__)
 
 
-class ZLEMAC(Indicator):
-    """Zero-Lag Exponential Moving Average Crossover indicator.
+class ALMA(Indicator):
+    """Arnaud Legoux Moving Average
 
-    Calculates the crossover between a short-term and a long-term zero-lag exponential moving average.
-
-    Emits a *BUY* signal when the short-term EMA crosses *over* the long-term EMA, indicating the start of an upward trend.
-    Emits a *SELL* signal when the short-term EMA crosses *under* the long-term EMA, indicating the start of a downward trend.
+    http://www.arnaudlegoux.com/img/ALMA-Arnaud-Legoux-Moving-Average.pdf
 
     Args:
-        fast: Length of the short-term EMA
-        slow: Length of the long-term EMA
+        length: Window length
+        offset: Trade-off between smoothness and responsiveness
+        sigma: Filter width
 
     """
-    def __init__(self, fast, slow):
-        assert fast < slow
-
-        self._ema_fast = deque(maxlen=fast)
-        self._ema_slow = deque(maxlen=slow)
-        self._prices = deque(maxlen=slow)
-
-        # TODO: Refactor
-        self._plot_ema_fast = []
-        self._plot_ema_slow = []
-
-    @property
-    def backtrack(self):
-        return self._ema_slow.maxlen * 10
+    def __init__(self, length, offset=0.85, sigma=6):
+        super().__init__(length)
+        self._prices = deque(maxlen=length)
+        self._offset = offset
+        self._sigma = sigma
 
     def advance(self, candle):
         price = candle.close
+        self._prices.append(price)
+        length = self._prices.maxlen
 
-        def update(ema):
-            length = ema.maxlen
-            lag = int((length - 1) / 2)
+        m = math.floor(self._offset * (length - 1))
+        s = length / self._sigma
+        total, norm = 0, 0
 
-            correction = price - self._prices[-lag] if len(self._prices) >= lag else 0
-            price_zlag = price + correction
-            self._prices.append(price)
+        for i, price in enumerate(self._prices):
+            coeff = math.exp(-((i - m)**2) / (2 * s**2))
+            total += price * coeff
+            norm += coeff
 
-            k = 2 / (length + 1)
-            ema.append(price_zlag * k + ema[-1] * (1 - k) if ema else price_zlag)
+        self.values.append(total / norm if norm else price)
 
-            tail = list(ema)[-2:]
-            return tail if len(tail) > 1 else tail * 2
 
-        a, b = update(self._ema_fast)
-        c, d = update(self._ema_slow)
+class EMA(Indicator):
+    """Exponential Moving Average
 
-        self._report(candle, a, b, c, d)
+    Args:
+        length: Window length
 
-        if len(self._ema_slow) < self._ema_slow.maxlen:
-            # Need more data before emitting signals
-            return
+    """
+    def __init__(self, length):
+        super().__init__(length)
+        self._prices = deque(maxlen=length)
+        self._k = 2 / (length + 1)
 
-        if a < c and b > d:
-            yield Signal.BUY
-        elif a > c and b < d:
-            yield Signal.SELL
+    def advance(self, candle):
+        price = candle.close
+        self._prices.append(price)
 
-    def _report(self, candle, a, b, c, d):
-        log.debug('{1} {0} {1}'.format(candle.time, '=' * 5))
-        log.debug('fast(%d): %.5g -> %.5g' % (self._ema_fast.maxlen, a, b))
-        log.debug('slow(%d): %.5g -> %.5g' % (self._ema_slow.maxlen, c, d))
-
-        # TODO: Refactor
-        self._plot_ema_fast.append(b)
-        self._plot_ema_slow.append(d)
+        ema = price * self._k + self.values[-1] * (1 - self._k) if self.values else price
+        self.values.append(ema)

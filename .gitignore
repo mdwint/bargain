@@ -18,6 +18,9 @@ venv/
 .installed.cfg
 *.egg
 *.pyc
+coverage/
+.coverage
+.tox/
 
 # IDE
 .vscode/
