@@ -48,7 +48,7 @@ class Bot:
 
         # TODO: Check price change against signal_price
 
-        log.info('%s %.5g %s for %.5g %s', signal.name, amount, pair[0].name, price, pair[1].name)
+        log.info('%s %.8f %s @ %.5g %s', signal.name, amount, pair[0].name, price, pair[1].name)
         if self._dryrun:
             log.info('Skipping order (dry run)')
             return

@@ -111,7 +111,7 @@ class Bitfinex(Exchange):
             'limit_trades': limit
         })
 
-        return [Trade(t['timestamp'], Signal[t['type'].upper()], t['price'], t['amount']) for t in raw]
+        return [Trade(t['timestamp'], Signal[t['type'].upper()], float(t['price']), float(t['amount'])) for t in raw]
 
     def get_wallet_balances(self):
         raw = self._signed_post('/v1/balances')

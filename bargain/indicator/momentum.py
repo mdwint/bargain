@@ -8,7 +8,16 @@ log = logging.getLogger(__name__)
 
 
 class RSI(Indicator):
+    """Relative Strength Index
 
+    TODO: Refactor
+
+    Args:
+        length: Window length
+        low: Low threshold
+        high: High threshold
+
+    """
     def __init__(self, length, low=30, high=70):
         self._gain = deque(maxlen=length)
         self._loss = deque(maxlen=length)
