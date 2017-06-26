@@ -27,6 +27,10 @@ class Bitfinex(Exchange):
             900: '15m',
             1800: '30m',
             3600: '1h',
+            10800: '3h',
+            21600: '6h',
+            43200: '12h',
+            86400: '1D',
         }.get(interval.total_seconds())
 
     @staticmethod
