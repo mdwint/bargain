@@ -18,12 +18,14 @@ class Bot:
     def trade(self, indicator, pair, ratio):
         backtrack = self._dryrun + indicator.backtrack
         candles = self._exchange.get_candles(pair, self._interval, self._now, backtrack)
+        signal = None
 
         for candle in candles:
             indicator.advance(candle)
+            signal = indicator.emit_signal() or signal
 
-        signal = indicator.emit_signal()
-        if signal: self._handle_signal(pair, signal, candle, ratio)
+        if signal:
+            self._handle_signal(pair, signal, candle, ratio)
 
         if self._dryrun:
             # TODO: Refactor
