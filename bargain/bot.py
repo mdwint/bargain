@@ -22,19 +22,20 @@ class Bot:
 
         for candle in candles:
             indicator.advance(candle)
-            signal = indicator.emit_signal() or signal
+            tmp_signal = indicator.emit_signal()
+            if tmp_signal:
+                signal = tmp_signal
+                signal_time, signal_price = candle.time, candle.close
+                log.debug('%s: %-4s @ %.5g' % (signal_time, signal.name, signal_price))
 
         if signal:
-            self._handle_signal(pair, signal, candle, ratio)
+            self._handle_signal(pair, signal, signal_time, signal_price, ratio)
 
         if self._dryrun:
             # TODO: Refactor
             show_chart(candles, indicator._sell, indicator._buy)
 
-    def _handle_signal(self, pair, signal, candle, ratio):
-        signal_time, signal_price = candle.time, candle.close
-        log.debug('%s: %-4s @ %.5g' % (signal_time, signal.name, signal_price))
-
+    def _handle_signal(self, pair, signal, signal_time, signal_price, ratio):
         past_trades = self._exchange.get_past_trades(pair, since=signal_time, until=self._now, limit=1)
 
         if past_trades:  # and past_trades[-1].signal == signal:
