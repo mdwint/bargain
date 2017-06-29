@@ -1,7 +1,7 @@
 {
   "name": "bargain",
   "version": "0.1.0",
-  "dependencies": {
+  "devDependencies": {
     "serverless-python-requirements": "^2.3.3"
   }
 }

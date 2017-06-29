@@ -28,7 +28,7 @@ def show_chart(candles, *args):
         return
 
     fig, ax = plt.subplots()
-    ax.xaxis.set_major_locator(HourLocator(interval=2))
+    ax.xaxis.set_major_locator(HourLocator(interval=6))
     ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
     dates = [c.time for c in candles]
 

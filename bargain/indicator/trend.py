@@ -22,20 +22,15 @@ class ALMA(Indicator):
     def __init__(self, length, offset=0.85, sigma=6):
         super().__init__(length)
         self._prices = deque(maxlen=length)
-        self._offset = offset
-        self._sigma = sigma
+        self._m = math.floor(offset * (length - 1))
+        self._s = length / sigma
 
     def advance(self, candle):
-        price = candle.close
-        self._prices.append(price)
-        length = self._prices.maxlen
-
-        m = math.floor(self._offset * (length - 1))
-        s = length / self._sigma
+        self._prices.append(candle.close)
         total, norm = 0, 0
 
         for i, price in enumerate(self._prices):
-            coeff = math.exp(-((i - m)**2) / (2 * s**2))
+            coeff = math.exp(-((i - self._m)**2) / (2 * self._s**2))
             total += price * coeff
             norm += coeff
 
