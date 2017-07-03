@@ -62,8 +62,8 @@ class Price(Indicator):
 class Crossover(Indicator):
     """Crossover indicator
 
-    Emits a buy signal when the buy indicator crosses over the sell value,
-    and a sell signal when the sell indicator crosses over the buy value.
+    Emits a buy signal when the buy indicator crosses over the sell indicator,
+    and a sell signal when the sell indicator crosses over the buy indicator.
 
     Args:
         buy_indicator: Buy indicator

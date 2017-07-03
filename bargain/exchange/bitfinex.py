@@ -94,11 +94,12 @@ class Bitfinex(Exchange):
         }
 
     def get_candles(self, pair, interval, now, limit):
-        history = interval * limit
+        start = ms(now - interval * (limit + 1))
+        end = ms(now - interval)
 
         raw = self._get('/v2/candles/trade:{interval}:t{symbol}/hist',
                         interval=self._period(interval), symbol=self._symbol(pair),
-                        params={'start': ms(now - history), 'end': ms(now), 'limit': limit, 'sort': 1})
+                        params={'start': start, 'end': end, 'limit': limit, 'sort': 1})
 
         return [Candle(dt(c[0]), c[1], c[2], c[3], c[4], c[5]) for c in raw]
 

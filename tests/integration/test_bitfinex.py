@@ -6,7 +6,7 @@ from bargain.currency import Currency
 
 def test_get_candles(now, bitfinex):
     pair = (Currency.ETH, Currency.USD)
-    interval = timedelta(minutes=15)
+    interval = timedelta(hours=1)
     limit = 10
 
     candles = bitfinex.get_candles(pair, interval, now, limit)

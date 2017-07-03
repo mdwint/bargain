@@ -25,7 +25,8 @@ class Bot:
             tmp_signal = indicator.emit_signal()
             if tmp_signal:
                 signal = tmp_signal
-                signal_time, signal_price = candle.time, candle.close
+                signal_time = candle.time + self._interval
+                signal_price = candle.close
                 log.debug('%s: %-4s @ %.5g' % (signal_time, signal.name, signal_price))
 
         if signal:
