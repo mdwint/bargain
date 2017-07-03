@@ -1,7 +1,6 @@
 import argparse
 import logging
 import os
-from collections import namedtuple
 from datetime import datetime, timedelta, timezone
 
 import yaml
@@ -9,7 +8,7 @@ import yaml
 from bargain.bot import Bot
 from bargain.exchange.bitfinex import Bitfinex
 from bargain.currency import Currency
-from bargain.indicator import Crossover
+from bargain.indicator import Indicator, Price, Crossover
 from bargain.indicator.trend import ALMA
 
 
@@ -17,24 +16,9 @@ logging.basicConfig()
 log = logging.getLogger()
 
 
-Config = namedtuple('Config', 'debug, dryrun, interval, now, pair, exchange, trade_ratio, indicator')
-
-
 def serverless_handler(event, context):
     exchange = Bitfinex(os.environ['BITFINEX_API_KEY'], os.environ['BITFINEX_API_SECRET'])
-    pair = (Currency[event['pair'][0]], Currency[event['pair'][1]])
-
-    interval = timedelta(minutes=event['interval'])
-    trade_ratio = event.get('trade_ratio', 1)
-
-    args = event['indicator']['crossover']
-    indicator = Crossover(buy_indicator=ALMA(**args['buy']['alma']),
-                          sell_indicator=ALMA(**args['sell']['alma']))
-
-    config = Config(debug=False, dryrun=0, now=datetime.now(timezone.utc),
-                    interval=interval, exchange=exchange, pair=pair,
-                    trade_ratio=trade_ratio, indicator=indicator)
-    main(config)
+    main(exchange, event)
 
 
 def cli_handler():
@@ -42,31 +26,30 @@ def cli_handler():
     p.add_argument('--debug', action='store_true', help='Show debug output')
     p.add_argument('--dryrun', metavar='N', type=int, default=0, help='Dry run over N intervals')
     p.add_argument('--secrets', metavar='PATH', default=os.path.join('config', 'secrets.yml'), help='Path to secrets.yml')
-    p.add_argument('--pair', metavar='SYMBOL', nargs=2, type=lambda s: Currency[s.upper()], required=True, help='Currency pair to trade')
-    p.add_argument('--interval', type=int, default=5, help='Trading interval in minutes')
-    p.add_argument('--ratio', type=float, default=1, help='Ratio to trade between currencies')
-    p.add_argument('--avg-fast', type=int, default=13, help='Length of the short-term moving average')
-    p.add_argument('--avg-slow', type=int, default=49, help='Length of the long-term moving average')
-    p.add_argument('--rsi-length', type=int, default=14, help='Length of the relative strength index')
+    p.add_argument('--schedule', metavar='PATH', default=os.path.join('config', 'schedule.yml'), help='Path to schedule.yml')
     args = p.parse_args()
 
     with open(args.secrets) as f:
         secrets = yaml.safe_load(f)
 
+    with open(args.schedule) as f:
+        schedule = yaml.safe_load(f)
+
     exchange = Bitfinex(**secrets['exchanges']['bitfinex'])
-    interval = timedelta(minutes=args.interval)
+    event = schedule['trades'][0]['schedule']['input']
 
-    indicator = Crossover(buy_indicator=ALMA(args.avg_fast),
-                          sell_indicator=ALMA(args.avg_slow))
-
-    config = Config(debug=args.debug, dryrun=args.dryrun, now=datetime.now(timezone.utc),
-                    interval=interval, exchange=exchange, pair=args.pair,
-                    trade_ratio=args.ratio, indicator=indicator)
-    main(config)
+    main(exchange, event, args.debug, args.dryrun)
 
 
-def main(config):
-    log.setLevel(logging.DEBUG if config.debug else logging.INFO)
+def main(exchange, event, debug=False, dryrun=0):
+    log.setLevel(logging.DEBUG if debug else logging.INFO)
 
-    bot = Bot(config.dryrun, config.exchange, config.now, config.interval)
-    bot.trade(config.indicator, config.pair, config.trade_ratio)
+    now = datetime.now(timezone.utc)
+    interval = timedelta(minutes=event['interval'])
+
+    pair = tuple(Currency[s] for s in event['pair'])
+    indicator = Indicator.from_args(event['indicator'])
+    trade_ratio = event.get('trade_ratio', 1)
+
+    bot = Bot(dryrun, exchange, now, interval)
+    bot.trade(indicator, pair, trade_ratio)

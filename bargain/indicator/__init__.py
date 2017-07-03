@@ -6,11 +6,45 @@ class Signal(Enum):
     SELL = -1
 
 
-class Indicator:
+_indicators = {}
+
+
+class IndicatorType(type):
+
+    def __new__(cls, name, bases, attrs):
+        if not attrs.get('name'):
+            attrs['name'] = name.lower()
+
+        new_cls = super().__new__(cls, name, bases, attrs)
+        _indicators[attrs['name']] = new_cls
+        return new_cls
+
+
+class Indicator(metaclass=IndicatorType):
 
     def __init__(self, length=0, backtrack_ratio=10):
         self.backtrack = length * backtrack_ratio
         self.values = []
+
+    @staticmethod
+    def from_args(args):
+        if isinstance(args, dict):
+            name, kwargs = next(iter(args.items()))
+        elif isinstance(args, str):
+            name, kwargs = args, {}
+        else:
+            raise ValueError('Invalid arguments: %s' % args)
+
+        try:
+            cls = _indicators[name]
+        except KeyError:
+            raise ValueError("No indicator named '%s'" % name)
+
+        return cls.from_kwargs(**kwargs)
+
+    @classmethod
+    def from_kwargs(cls, **kwargs):
+        return cls(**kwargs)
 
     def advance(self, candle):
         raise NotImplementedError()
@@ -39,6 +73,12 @@ class Crossover(Indicator):
     def __init__(self, buy_indicator, sell_indicator):
         self._buy = buy_indicator
         self._sell = sell_indicator
+
+    @classmethod
+    def from_kwargs(cls, **kwargs):
+        def f(key):
+            return cls.from_args(kwargs[key])
+        return cls(f('buy'), f('sell'))
 
     @property
     def backtrack(self):
