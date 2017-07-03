@@ -22,14 +22,14 @@ class Candle:
 def show_chart(candles, *args):
     try:
         import matplotlib.pyplot as plt
-        from matplotlib.dates import DateFormatter, HourLocator
+        # from matplotlib.dates import DateFormatter, HourLocator
     except ImportError:
         log.warning('Rendering charts requires matplotlib (not installed)')
         return
 
     fig, ax = plt.subplots()
-    ax.xaxis.set_major_locator(HourLocator(interval=6))
-    ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+    # ax.xaxis.set_major_locator(HourLocator(interval=6))
+    # ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
     dates = [c.time for c in candles]
 
     plt.plot(dates, [c.close for c in candles])
