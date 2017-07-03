@@ -12,3 +12,4 @@ class Currency(Enum):
     DASH = auto()
     XRP = auto()
     IOT = auto()
+    EOS = auto()
