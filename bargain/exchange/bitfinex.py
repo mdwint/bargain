@@ -1,14 +1,14 @@
+from base64 import b64encode
+from datetime import datetime, timezone
 import hmac
 import json
 import requests
-from base64 import b64encode
-from datetime import datetime, timezone
 
 from bargain.charts import Candle
 from bargain.currency import Currency
 from bargain.exchange import Exchange, Ticker, Trade
 from bargain.indicator import Signal
-from bargain.utils import dt, ms
+from bargain.utils import dt, ms, retryable
 
 
 class Bitfinex(Exchange):
@@ -43,8 +43,13 @@ class Bitfinex(Exchange):
             r.raise_for_status()
         except:
             raise RuntimeError(r.text)
-        return r.json()
 
+        body = r.json()
+        if 'error' in body:
+            raise RuntimeError(body)
+        return body
+
+    @retryable(max_attempts=5, wait=0.5)
     def _get(self, path, **kwargs):
         params = kwargs.pop('params', {})
 
