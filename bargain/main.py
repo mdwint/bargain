@@ -5,11 +5,9 @@ from datetime import datetime, timedelta, timezone
 
 import yaml
 
-from bargain.bot import Bot
 from bargain.exchange.bitfinex import Bitfinex
 from bargain.currency import Currency
-from bargain.indicator import Indicator, Price, Crossover
-from bargain.indicator.trend import ALMA
+from bargain.strategy.marketmaker import MarketMaker
 
 
 logging.basicConfig()
@@ -48,8 +46,7 @@ def main(exchange, event, debug=False, dryrun=0):
     interval = timedelta(minutes=event['interval'])
 
     pair = tuple(Currency[s] for s in event['pair'])
-    indicator = Indicator.from_args(event['indicator'])
-    trade_ratio = event.get('trade_ratio', 1)
+    trade_amount = event['trade_amount']
 
-    bot = Bot(dryrun, exchange, now, interval)
-    bot.trade(indicator, pair, trade_ratio)
+    strategy = MarketMaker(exchange, now, interval)
+    strategy.trade(pair, trade_amount)

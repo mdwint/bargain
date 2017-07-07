@@ -113,6 +113,10 @@ class Bitfinex(Exchange):
 
         return Ticker(bid=raw[0], ask=raw[2])
 
+    def get_orders(self, pair):
+        raw = self._signed_post('/v1/orders')
+        return raw
+
     def get_past_trades(self, pair, since, until, limit):
         raw = self._signed_post('/v1/mytrades', data={
             'symbol': self._symbol(pair),

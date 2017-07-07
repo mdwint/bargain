@@ -2,12 +2,13 @@ import logging
 
 from bargain.charts import show_chart
 from bargain.indicator import Signal
+from bargain.strategy import Strategy
 
 
 log = logging.getLogger(__name__)
 
 
-class Bot:
+class Trader(Strategy):
 
     def __init__(self, dryrun, exchange, now, interval):
         self._dryrun = dryrun
