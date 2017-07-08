@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from bargain.exchange import Exchange, Ticker
+from bargain.exchange import Exchange, Ticker, Trade
 from bargain.exchange.bitfinex import Bitfinex
 
 
@@ -29,8 +29,8 @@ class MockExchange(Exchange):
         self._execute_orders(pair)
         self._prev_price[pair] = self._price[pair]
 
-    def get_past_trades(self, pair):
-        return tuple(self._trades[pair])
+    def get_past_trades(self, pair, since, until, limit=1000):
+        return tuple(self._trades[pair][-limit:])
 
     def get_active_orders(self, pair):
         return tuple(self._orders[pair])
@@ -47,8 +47,8 @@ class MockExchange(Exchange):
         self._execute_orders(order.pair)
         return order
 
-    def place_orders(self, pair, orders):
-        return tuple(self.place_order(pair, amount, price) for amount, price in orders)
+    def place_orders(self, orders):
+        return tuple(self.place_order(o) for o in orders)
 
     def cancel_order(self, order):
         self._orders[order.pair].remove(order)
@@ -68,8 +68,11 @@ class MockExchange(Exchange):
             elif order.amount < 0:
                 self._balance[pair[1]] += abs(order.cost)
 
+            trade = Trade(len(self._trades[pair]), datetime.now(timezone.utc),
+                          pair, order.amount, order.price)
+
             self._orders[pair].remove(order)
-            self._trades[pair].append(order)
+            self._trades[pair].append(trade)
 
 
 @pytest.fixture

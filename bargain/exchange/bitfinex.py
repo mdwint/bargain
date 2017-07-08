@@ -6,8 +6,7 @@ import requests
 
 from bargain.charts import Candle
 from bargain.currency import Currency
-from bargain.exchange import Exchange, Ticker, Trade
-from bargain.indicator import Signal
+from bargain.exchange import Exchange, Order, Ticker, Trade
 from bargain.utils import dt, ms, retryable
 
 
@@ -113,11 +112,12 @@ class Bitfinex(Exchange):
 
         return Ticker(bid=raw[0], ask=raw[2])
 
-    def get_orders(self, pair):
+    def get_active_orders(self, pair):
         raw = self._signed_post('/v1/orders')
-        return raw
+        return [Order(pair, float(o['remaining_amount']) * 1 if ['side'] == 'buy' else -1,
+                      float(o['price']), o['id']) for o in raw]
 
-    def get_past_trades(self, pair, since, until, limit):
+    def get_past_trades(self, pair, since, until, limit=1000):
         raw = self._signed_post('/v1/mytrades', data={
             'symbol': self._symbol(pair),
             'timestamp': str(since.timestamp()),
@@ -125,18 +125,31 @@ class Bitfinex(Exchange):
             'limit_trades': limit
         })
 
-        return [Trade(t['timestamp'], Signal[t['type'].upper()], float(t['price']), float(t['amount'])) for t in raw]
+        return [Trade(t['id'], datetime.fromtimestamp(t['timestamp']),
+                      pair, float(t['amount']), float(t['price'])) for t in raw]
 
     def get_wallet_balances(self):
         raw = self._signed_post('/v1/balances')
         return {Currency[b['currency'].upper()]: float(b['amount']) for b in raw}
 
-    def place_order(self, pair, signal, amount, price):
-        return self._signed_post('/v1/order/new', data={
+    def place_order(self, order):
+        return self._signed_post('/v1/order/new', data=self._serialize_order(order))
+
+    def place_orders(self, orders):
+        return self._signed_post('/v1/order/new/multi', data={'orders': [self._serialize_order(o) for o in orders]})
+
+    def _serialize_order(self, order):
+        return {
             'exchange': 'bitfinex',
-            'symbol': ''.join(s.name.lower() for s in pair),
-            'side': signal.name.lower(),
-            'amount': '%.8f' % amount,
+            'symbol': ''.join(s.name.lower() for s in order.pair),
+            'side': 'buy' if order.is_buy else 'sell',
+            'amount': '%.8f' % abs(order.amount),
             'type': 'exchange limit',
-            'price': '%.5g' % price
-        })
+            'price': '%.5g' % order.price
+        }
+
+    def cancel_order(self, order):
+        return self._signed_post('/v1/order/cancel', data={'order_id': order.id})
+
+    def cancel_orders(self, orders):
+        return self._signed_post('/v1/order/cancel/multi', data={'order_ids': [o.id for o in orders]})

@@ -46,7 +46,7 @@ def main(exchange, event, debug=False, dryrun=0):
     interval = timedelta(minutes=event['interval'])
 
     pair = tuple(Currency[s] for s in event['pair'])
-    trade_amount = event['trade_amount']
+    m = event['market_maker']
 
-    strategy = MarketMaker(exchange, now, interval)
-    strategy.trade(pair, trade_amount)
+    strategy = MarketMaker(dryrun, exchange, now, interval)
+    strategy.trade(pair, m['trade_amount'], m['profit_margin'], m['buydown_margin'])

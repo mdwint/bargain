@@ -18,13 +18,13 @@ def test_marketmaker(exchange, now):
     exchange._set_price(pair, 50)
     exchange._set_price(pair, 50)
 
-    strategy = MarketMaker(exchange, now, interval=timedelta(minutes=1))
+    strategy = MarketMaker(0, exchange, now, interval=timedelta(minutes=1))
 
     def trade():
         strategy.trade(pair, trade_amount, profit_margin, buydown_margin)
 
     def assert_past_trades(*args):
-        assert exchange.get_past_trades(pair) == tuple(args)
+        assert exchange.get_past_trades(pair, now, now) == tuple(args)
 
     def assert_active_orders(*args):
         orders = exchange.get_active_orders(pair)

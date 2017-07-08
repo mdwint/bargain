@@ -3,16 +3,16 @@ from collections import namedtuple
 
 
 Ticker = namedtuple('Ticker', 'bid, ask')
-Trade = namedtuple('Trade', 'timestamp, signal, price, amount')
 
 
 class Order:
 
-    def __init__(self, pair, amount, price):
+    def __init__(self, pair, amount, price, id=None):
         assert price > 0
         self.pair = pair
         self.amount = amount
         self.price = price
+        self.id = id
 
     @property
     def is_buy(self):
@@ -27,17 +27,34 @@ class Order:
         return self.amount * self.price
 
     def __repr__(self):
-        return '%s/%s: %.8f @ %.5g' % (self.pair[0].name, self.pair[1].name, self.amount, self.price)
+        return '%s %.8f %s @ %.5g %s' % ('BUY' if self.is_buy else 'SELL',
+                                         abs(self.amount), self.pair[0].name,
+                                         self.price, self.pair[1].name)
 
     def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.__dict__ == other.__dict__
+        if isinstance(other, Order):
+            return (self.pair == other.pair and
+                    self.amount == other.amount and
+                    self.price == other.price)
         return NotImplemented
 
     def __ne__(self, other):
-        if isinstance(other, self.__class__):
+        if isinstance(other, Order):
             return not self.__eq__(other)
         return NotImplemented
+
+
+class Trade(Order):
+
+    def __init__(self, id, timestamp, pair, amount, price):
+        super().__init__(pair, amount, price, id)
+        self.timestamp = timestamp
+
+    def __eq__(self, other):
+        if isinstance(other, Trade):
+            if self.timestamp != other.timestamp:
+                return False
+        return super().__eq__(other)
 
 
 class Exchange(metaclass=ABCMeta):
