@@ -8,11 +8,11 @@ from bargain.strategy.marketmaker import MarketMaker
 def test_marketmaker(exchange, now):
     pair = (Currency.ETH, Currency.USD)
     trade_amount = 0.1
-    profit_margin = 0.10
-    buydown_margin = 0.05
+    profit_pct = 10
+    buydown_pct = 5
 
-    pft = 1 + profit_margin
-    bdn = 1 - buydown_margin
+    pft = (100 + profit_pct) / 100
+    bdn = (100 - buydown_pct) / 100
 
     exchange._balance[pair[1]] = 100
     exchange._set_price(pair, 50)
@@ -21,7 +21,7 @@ def test_marketmaker(exchange, now):
     strategy = MarketMaker(0, exchange, now, interval=timedelta(minutes=1))
 
     def trade():
-        strategy.trade(pair, trade_amount, profit_margin, buydown_margin)
+        strategy.trade(pair, trade_amount, profit_pct, buydown_pct)
 
     def assert_past_trades(*args):
         assert exchange.get_past_trades(pair, now, now) == tuple(args)
