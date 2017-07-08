@@ -23,7 +23,7 @@ class Order:
         return self.amount < 0
 
     def __repr__(self):
-        return '%s: %.8f @ %.5g' % (self.pair, self.amount, self.price)
+        return '%s/%s: %.8f @ %.5g' % (self.pair[0].name, self.pair[1].name, self.amount, self.price)
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):

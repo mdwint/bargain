@@ -16,7 +16,7 @@ def test_orders(exchange):
 
     buy = exchange.place_order(pair, trade_amount)
 
-    # executed buy
+    # Executed buy
     assert_balance(0.1, 95)
     assert exchange.get_trades(pair) == (buy,)
     assert exchange.get_orders(pair) == ()
@@ -24,21 +24,21 @@ def test_orders(exchange):
     sell = exchange.place_order(pair, -trade_amount, price=60)
     buydown = exchange.place_order(pair, trade_amount, price=45)
 
-    # placed sell & buydown
+    # Placed sell & buydown
     assert_balance(0, 90.5)
     assert exchange.get_trades(pair) == (buy,)
     assert exchange.get_orders(pair) == (sell, buydown)
 
     exchange.set_price(pair, 61)
 
-    # executed sell
+    # Executed sell
     assert_balance(0, 96.5)
     assert exchange.get_trades(pair) == (buy, sell)
     assert exchange.get_orders(pair) == (buydown,)
 
     exchange.set_price(pair, 43)
 
-    # executed buydown
+    # Executed buydown
     assert_balance(0.1, 96.5)
     assert exchange.get_trades(pair) == (buy, sell, buydown)
     assert exchange.get_orders(pair) == ()

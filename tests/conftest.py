@@ -26,6 +26,7 @@ class MockExchange(Exchange):
         self._prev_price[pair] = self._price[pair]
         self._price[pair] = price
         self._execute_orders(pair)
+        self._prev_price[pair] = self._price[pair]
 
     def get_orders(self, pair):
         return tuple(self._orders[pair])
@@ -53,7 +54,7 @@ class MockExchange(Exchange):
         return tuple(self.place_order(pair, amount, price) for amount, price in orders)
 
     def cancel_order(self, order):
-        self._orders.remove(order)
+        self._orders[order.pair].remove(order)
 
     def cancel_orders(self, orders):
         for order in orders:

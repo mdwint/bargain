@@ -19,7 +19,6 @@ class MarketMaker(Strategy):
 
         sell_orders = [o for o in orders if o.is_sell]
         buy_orders = [o for o in orders if o.is_buy]
-        buy = None
 
         if not sell_orders:
             # Place market buy order
@@ -27,18 +26,19 @@ class MarketMaker(Strategy):
         elif not buy_orders:
             buy = self._get_last_buy_order(pair)
         else:
-            self._exchange.cancel_orders(buy_orders)
+            buy = None
 
         if buy:
             # Place limit sell order
             self._exchange.place_order(pair, -trade_amount, buy.price * (1 + profit_margin))
             price = buy.price
 
-        # Place limit buydown order
+        # (Re)place limit buydown order
+        if buy_orders: self._exchange.cancel_orders(buy_orders)
         self._exchange.place_order(pair, trade_amount, price * (1 - buydown_margin))
 
     def _get_last_buy_order(self, pair):
         try:
-            return next(reversed(o for o in self._exchange.get_trades(pair) if o.is_buy))
-        except StopIteration:
+            return [o for o in self._exchange.get_trades(pair) if o.is_buy][-1]
+        except IndexError:
             raise ValueError('No last %s buy order found!' % pair)
