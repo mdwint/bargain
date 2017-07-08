@@ -23,6 +23,13 @@ def test_marketmaker(exchange, now):
     def trade():
         strategy.trade(pair, trade_amount, profit_margin, buydown_margin)
 
+    def assert_active_orders(*args):
+        orders = exchange.get_orders(pair)
+        assert orders == tuple(args)
+
+        assert sum(1 for o in orders if o.is_buy) == 1
+        assert sum(1 for o in orders if o.is_sell) >= 1
+
     buy1 = Order(pair, trade_amount, 50)
     sell1 = Order(pair, -trade_amount, 50 * pft)
     buydown1 = Order(pair, trade_amount, 50 * bdn)
@@ -30,13 +37,13 @@ def test_marketmaker(exchange, now):
 
     # Executed buy
     assert exchange.get_trades(pair) == (buy1,)
-    assert exchange.get_orders(pair) == (sell1, buydown1)
+    assert_active_orders(sell1, buydown1)
 
     trade()
 
     # No changes
     assert exchange.get_trades(pair) == (buy1,)
-    assert exchange.get_orders(pair) == (sell1, buydown1)
+    assert_active_orders(sell1, buydown1)
 
     # Price went up
     exchange.set_price(pair, 50 * 1.11)
@@ -47,7 +54,7 @@ def test_marketmaker(exchange, now):
 
     # Executed sell
     assert exchange.get_trades(pair) == (buy1, sell1, buy2)
-    assert exchange.get_orders(pair) == (sell2, buydown2)
+    assert_active_orders(sell2, buydown2)
 
     # Price went down
     exchange.set_price(pair, 50 * 1.10 * bdn)
@@ -57,4 +64,4 @@ def test_marketmaker(exchange, now):
 
     # Executed buydown
     assert exchange.get_trades(pair) == (buy1, sell1, buy2, buydown2)
-    assert exchange.get_orders(pair) == (sell2, sell3, buydown3)
+    assert_active_orders(sell2, sell3, buydown3)
