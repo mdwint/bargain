@@ -17,8 +17,6 @@ class MarketMaker(Strategy):
 
     def trade(self, pair, trade_amount, profit_pct, buydown_pct):
         orders = self._exchange.get_active_orders(pair)
-        price = self._exchange.get_ticker(pair).ask
-
         sell_orders = [o for o in orders if o.is_sell]
         buy_orders = [o for o in orders if o.is_buy]
 
@@ -31,7 +29,8 @@ class MarketMaker(Strategy):
             return order
 
         def place_market_buy():
-            return place_order(pair, trade_amount, price)
+            ticker = self._exchange.get_ticker(pair)
+            return place_order(pair, trade_amount, price=ticker.ask)
 
         if not sell_orders:
             buy = place_market_buy()
@@ -43,15 +42,13 @@ class MarketMaker(Strategy):
         if buy:
             # Place sell limit order with profit
             place_order(pair, -trade_amount, buy.price * ((100 + profit_pct) / 100))
-            price = buy.price
 
-        # (Re)place buydown limit order to maintain straddle
-        cancel_orders.extend(buy_orders)
-        place_order(pair, trade_amount, price * ((100 - buydown_pct) / 100))
+            # (Re)place buydown limit order to maintain straddle
+            cancel_orders.extend(buy_orders)
+            place_order(pair, trade_amount, buy.price * ((100 - buydown_pct) / 100))
 
-        if cancel_orders:
-            log.info('Cancel orders: %s', cancel_orders)
-        log.info('Place orders: %s', new_orders)
+        if cancel_orders: log.info('Cancel orders: %s', cancel_orders)
+        if new_orders: log.info('Place orders: %s', new_orders)
 
         if self._dryrun:
             log.info('Skipping orders (dry run)')
