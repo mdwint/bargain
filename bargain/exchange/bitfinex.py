@@ -119,7 +119,8 @@ class Bitfinex(Exchange):
     def get_active_orders(self, pair):
         raw = self._signed_post('/v1/orders')
         return [Order(pair, float(o['remaining_amount']) * (1 if o['side'] == 'buy' else -1),
-                      float(o['price']), o['id']) for o in raw]
+                      float(o['price']), o['id'])
+                for o in raw if o['symbol'] == self._symbol(pair).lower()]
 
     def get_past_trades(self, pair, since, until, limit=1000):
         raw = self._signed_post('/v1/mytrades', data={

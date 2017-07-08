@@ -25,6 +25,7 @@ def cli_handler():
     p.add_argument('--dryrun', metavar='N', type=int, default=0, help='Dry run over N intervals')
     p.add_argument('--secrets', metavar='PATH', default=os.path.join('config', 'secrets.yml'), help='Path to secrets.yml')
     p.add_argument('--schedule', metavar='PATH', default=os.path.join('config', 'schedule.yml'), help='Path to schedule.yml')
+    p.add_argument('--trade', metavar='I', type=int, default=0, help='Index of trade in schedule.yml')
     args = p.parse_args()
 
     with open(args.secrets) as f:
@@ -34,7 +35,7 @@ def cli_handler():
         schedule = yaml.safe_load(f)
 
     exchange = Bitfinex(**secrets['exchanges']['bitfinex'])
-    event = schedule['trades'][0]['schedule']['input']
+    event = schedule['trades'][args.trade]['schedule']['input']
 
     main(exchange, event, args.debug, args.dryrun)
 
