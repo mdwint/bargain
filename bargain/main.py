@@ -49,4 +49,4 @@ def main(exchange, event, debug=False, dryrun=0):
     m = event['market_maker']
 
     strategy = MarketMaker(dryrun, exchange, now, interval)
-    strategy.trade(pair, m['trade_amount'], m['profit_margin'], m['buydown_margin'])
+    strategy.trade(pair, m['trade_amount'], m['profit_pct'], m['buydown_pct'])

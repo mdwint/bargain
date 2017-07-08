@@ -15,9 +15,9 @@ class MarketMaker(Strategy):
         self._now = now
         self._interval = interval
 
-    def trade(self, pair, trade_amount, profit_margin, buydown_margin):
-        price = self._exchange.get_ticker(pair).ask
+    def trade(self, pair, trade_amount, profit_pct, buydown_pct):
         orders = self._exchange.get_active_orders(pair)
+        price = self._exchange.get_ticker(pair).ask
 
         sell_orders = [o for o in orders if o.is_sell]
         buy_orders = [o for o in orders if o.is_buy]
@@ -41,16 +41,16 @@ class MarketMaker(Strategy):
             buy = None
 
         if buy:
-            # Place limit sell with profit
-            place_order(pair, -trade_amount, buy.price * (1 + profit_margin))
+            # Place sell limit order with profit
+            place_order(pair, -trade_amount, buy.price * ((100 + profit_pct) / 100))
             price = buy.price
 
-        # (Re)place limit buydown to maintain straddle
-        if buy_orders:
-            cancel_orders.extend(buy_orders)
-        place_order(pair, trade_amount, price * (1 - buydown_margin))
+        # (Re)place buydown limit order to maintain straddle
+        cancel_orders.extend(buy_orders)
+        place_order(pair, trade_amount, price * ((100 - buydown_pct) / 100))
 
-        log.info('Cancel orders: %s', cancel_orders)
+        if cancel_orders:
+            log.info('Cancel orders: %s', cancel_orders)
         log.info('Place orders: %s', new_orders)
 
         if self._dryrun:
@@ -59,13 +59,17 @@ class MarketMaker(Strategy):
 
         if cancel_orders:
             self._exchange.cancel_orders(cancel_orders)
-        self._exchange.place_orders(new_orders)
+
+        for order in new_orders:
+            self._exchange.place_order(order)
 
     def _get_last_buy(self, pair):
         until = self._now
-        since = until - self._interval
+        since = until - self._interval * 2
+        past_trades = self._exchange.get_past_trades(pair, since, until)
+        log.debug('Past trades: %s', past_trades)
 
         try:
-            return [o for o in self._exchange.get_past_trades(pair, since, until) if o.is_buy][-1]
+            return [t for t in past_trades if t.is_buy][-1]
         except IndexError:
             return None

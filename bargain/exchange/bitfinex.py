@@ -2,12 +2,16 @@ from base64 import b64encode
 from datetime import datetime, timezone
 import hmac
 import json
+import logging
 import requests
 
 from bargain.charts import Candle
 from bargain.currency import Currency
 from bargain.exchange import Exchange, Order, Ticker, Trade
 from bargain.utils import dt, ms, retryable
+
+
+log = logging.getLogger(__name__)
 
 
 class Bitfinex(Exchange):
@@ -114,7 +118,7 @@ class Bitfinex(Exchange):
 
     def get_active_orders(self, pair):
         raw = self._signed_post('/v1/orders')
-        return [Order(pair, float(o['remaining_amount']) * 1 if ['side'] == 'buy' else -1,
+        return [Order(pair, float(o['remaining_amount']) * (1 if o['side'] == 'buy' else -1),
                       float(o['price']), o['id']) for o in raw]
 
     def get_past_trades(self, pair, since, until, limit=1000):
@@ -125,8 +129,9 @@ class Bitfinex(Exchange):
             'limit_trades': limit
         })
 
-        return [Trade(t['tid'], datetime.fromtimestamp(t['timestamp']),
-                      pair, float(t['amount']), float(t['price'])) for t in raw]
+        return [Trade(t['tid'], datetime.fromtimestamp(float(t['timestamp'])),
+                      pair, float(t['amount']) * (1 if t['type'] == 'Buy' else -1),
+                      float(t['price'])) for t in raw]
 
     def get_wallet_balances(self):
         raw = self._signed_post('/v1/balances')
@@ -141,10 +146,10 @@ class Bitfinex(Exchange):
     def _serialize_order(self, order):
         return {
             'exchange': 'bitfinex',
+            'type': 'exchange limit',
             'symbol': ''.join(s.name.lower() for s in order.pair),
             'side': 'buy' if order.is_buy else 'sell',
             'amount': '%.8f' % abs(order.amount),
-            'type': 'exchange limit',
             'price': '%.5g' % order.price
         }
 
