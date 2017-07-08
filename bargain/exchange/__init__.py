@@ -22,6 +22,10 @@ class Order:
     def is_sell(self):
         return self.amount < 0
 
+    @property
+    def cost(self):
+        return self.amount * self.price
+
     def __repr__(self):
         return '%s/%s: %.8f @ %.5g' % (self.pair[0].name, self.pair[1].name, self.amount, self.price)
 
@@ -39,9 +43,33 @@ class Order:
 class Exchange(metaclass=ABCMeta):
 
     @abstractmethod
-    def get_orders(self, pair):
+    def get_wallet_balances(self):
         pass
 
     @abstractmethod
-    def place_order(self, pair, signal, amount, price):
+    def get_ticker(self, pair):
+        pass
+
+    @abstractmethod
+    def get_past_trades(self, pair):
+        pass
+
+    @abstractmethod
+    def get_active_orders(self, pair):
+        pass
+
+    @abstractmethod
+    def place_order(self, order):
+        pass
+
+    @abstractmethod
+    def place_orders(self, orders):
+        pass
+
+    @abstractmethod
+    def cancel_order(self, order):
+        pass
+
+    @abstractmethod
+    def cancel_orders(self, orders):
         pass

@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from bargain.exchange import Exchange, Order
+from bargain.exchange import Exchange, Ticker
 from bargain.exchange.bitfinex import Bitfinex
 
 
@@ -19,35 +19,32 @@ class MockExchange(Exchange):
     def get_wallet_balances(self):
         return self._balance
 
-    def get_price(self, pair):
-        return self._price[pair]
+    def get_ticker(self, pair):
+        price = self._price[pair]
+        return Ticker(bid=price, ask=price)
 
-    def set_price(self, pair, price):
+    def _set_price(self, pair, price):
         self._prev_price[pair] = self._price[pair]
         self._price[pair] = price
         self._execute_orders(pair)
         self._prev_price[pair] = self._price[pair]
 
-    def get_orders(self, pair):
-        return tuple(self._orders[pair])
-
-    def get_trades(self, pair):
+    def get_past_trades(self, pair):
         return tuple(self._trades[pair])
 
-    def place_order(self, pair, amount, price=None):
-        assert amount
-        price = price or self.get_price(pair)
+    def get_active_orders(self, pair):
+        return tuple(self._orders[pair])
 
-        if amount > 0:
-            assert self._balance[pair[1]] >= amount * price
-            self._balance[pair[1]] -= amount * price
-        elif amount < 0:
-            assert self._balance[pair[0]] >= abs(amount)
-            self._balance[pair[0]] -= abs(amount)
+    def place_order(self, order):
+        if order.is_buy:
+            assert self._balance[order.pair[1]] >= order.cost
+            self._balance[order.pair[1]] -= order.cost
+        elif order.is_sell:
+            assert self._balance[order.pair[0]] >= abs(order.amount)
+            self._balance[order.pair[0]] -= abs(order.amount)
 
-        order = Order(pair, amount, price)
-        self._orders[pair].append(order)
-        self._execute_orders(pair)
+        self._orders[order.pair].append(order)
+        self._execute_orders(order.pair)
         return order
 
     def place_orders(self, pair, orders):
@@ -69,7 +66,7 @@ class MockExchange(Exchange):
             if order.amount > 0:
                 self._balance[pair[0]] += order.amount
             elif order.amount < 0:
-                self._balance[pair[1]] += abs(order.amount) * order.price
+                self._balance[pair[1]] += abs(order.cost)
 
             self._orders[pair].remove(order)
             self._trades[pair].append(order)
