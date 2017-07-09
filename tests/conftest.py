@@ -36,6 +36,9 @@ class MockExchange(Exchange):
         return tuple(self._orders[pair])
 
     def place_order(self, order):
+        if not order.price:
+            order.price = self._price[order.pair]
+
         if order.is_buy:
             assert self._balance[order.pair[1]] >= order.cost
             self._balance[order.pair[1]] -= order.cost

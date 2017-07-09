@@ -7,8 +7,7 @@ Ticker = namedtuple('Ticker', 'bid, ask')
 
 class Order:
 
-    def __init__(self, pair, amount, price, id=None):
-        assert price > 0
+    def __init__(self, pair, amount, price=None, id=None):
         self.pair = pair
         self.amount = amount
         self.price = price
@@ -29,7 +28,7 @@ class Order:
     def __repr__(self):
         return '%s %.8f %s @ %.5g %s' % ('BUY' if self.is_buy else 'SELL',
                                          abs(self.amount), self.pair[0].name,
-                                         self.price, self.pair[1].name)
+                                         self.price or -1, self.pair[1].name)
 
     def __eq__(self, other):
         if isinstance(other, Order):

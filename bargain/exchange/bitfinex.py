@@ -148,11 +148,11 @@ class Bitfinex(Exchange):
     def _serialize_order(self, order):
         return {
             'exchange': 'bitfinex',
-            'type': 'exchange limit',
+            'type': 'exchange %s' % ('limit' if order.price else 'market'),
             'symbol': ''.join(s.name.lower() for s in order.pair),
             'side': 'buy' if order.is_buy else 'sell',
             'amount': '%.8f' % abs(order.amount),
-            'price': '%.5g' % order.price
+            'price': '%.5g' % (order.price or 1)
         }
 
     def _deserialize_order(self, pair, raw):

@@ -40,8 +40,9 @@ class MarketMaker(Strategy):
             self._exchange.cancel_orders(orders)
 
         def place_market_buy():
-            ticker = self._exchange.get_ticker(pair)
-            buy = Order(pair, trade_amount, price=ticker.ask)
+            buy = Order(pair, trade_amount)
+            if self._dryrun:
+                buy.price = self._exchange.get_ticker(pair).ask
             return place_order(buy)
 
         def place_profit_sell(buy):
