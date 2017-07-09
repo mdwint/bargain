@@ -59,6 +59,7 @@ class Bitfinex(Exchange):
         r = requests.get(self._base + path.format(**kwargs), params=params)
         return self._raise_or_return(r)
 
+    @retryable(max_attempts=3, wait=0.5)
     def _signed_post(self, path, **kwargs):
         params = kwargs.pop('params', {})
         form = kwargs.pop('data', {})

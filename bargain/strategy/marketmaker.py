@@ -20,45 +20,50 @@ class MarketMaker(Strategy):
         sell_orders = [o for o in orders if o.is_sell]
         buy_orders = [o for o in orders if o.is_buy]
 
-        cancel_orders = []
-        new_orders = []
+        profit_scl = (100 + profit_pct) / 100
+        buydown_scl = (100 - buydown_pct) / 100
 
-        def place_order(*args, **kwargs):
-            order = Order(*args, **kwargs)
-            new_orders.append(order)
-            return order
+        def place_order(order):
+            if self._dryrun:
+                log.info('Skipping order (dry run): %s', order)
+                return
+            log.info('Placing order: %s', order)
+            self._exchange.place_order(order)
+
+        def cancel_orders(orders):
+            if not orders:
+                return
+            if self._dryrun:
+                log.info('Skipping cancel (dry run): %s', orders)
+                return
+            log.info('Cancel orders: %s', orders)
+            self._exchange.cancel_orders(orders)
 
         def place_market_buy():
             ticker = self._exchange.get_ticker(pair)
-            return place_order(pair, trade_amount, price=ticker.ask)
+            buy = Order(pair, trade_amount, price=ticker.ask)
+            place_order(buy)
+            return buy
+
+        def place_profit_sell(buy):
+            sell = Order(pair, -trade_amount, buy.price * profit_scl)
+            sell_orders.append(sell)
+            place_order(sell)
+            return sell
 
         if not sell_orders:
             buy = place_market_buy()
+            place_profit_sell(buy)
         elif not buy_orders:
             buy = self._get_last_buy(pair) or place_market_buy()
-        else:
-            buy = None
+            place_profit_sell(buy)
 
-        if buy:
-            # Place sell limit order with profit
-            place_order(pair, -trade_amount, buy.price * ((100 + profit_pct) / 100))
+        min_sell_price = min(o.price for o in sell_orders)
+        buydown = Order(pair, trade_amount, min_sell_price / profit_scl * buydown_scl)
 
-            # (Re)place buydown limit order to maintain straddle
-            cancel_orders.extend(buy_orders)
-            place_order(pair, trade_amount, buy.price * ((100 - buydown_pct) / 100))
-
-        if cancel_orders: log.info('Cancel orders: %s', cancel_orders)
-        if new_orders: log.info('Place orders: %s', new_orders)
-
-        if self._dryrun:
-            log.info('Skipping orders (dry run)')
-            return
-
-        if cancel_orders:
-            self._exchange.cancel_orders(cancel_orders)
-
-        for order in new_orders:
-            self._exchange.place_order(order)
+        if buydown not in buy_orders:
+            cancel_orders(buy_orders)
+            place_order(buydown)
 
     def _get_last_buy(self, pair):
         until = self._now

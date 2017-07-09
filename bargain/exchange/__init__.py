@@ -33,9 +33,8 @@ class Order:
 
     def __eq__(self, other):
         if isinstance(other, Order):
-            return (self.pair == other.pair and
-                    self.amount == other.amount and
-                    self.price == other.price)
+            # Compare up to significant digits
+            return self.__repr__() == other.__repr__()
         return NotImplemented
 
     def __ne__(self, other):
