@@ -119,9 +119,7 @@ class Bitfinex(Exchange):
 
     def get_active_orders(self, pair):
         raw = self._signed_post('/v1/orders')
-        return [Order(pair, float(o['remaining_amount']) * (1 if o['side'] == 'buy' else -1),
-                      float(o['price']), o['id'])
-                for o in raw if o['symbol'] == self._symbol(pair).lower()]
+        return [self._deserialize_order(pair, o) for o in raw if o['symbol'] == self._symbol(pair).lower()]
 
     def get_past_trades(self, pair, since, until, limit=1000):
         raw = self._signed_post('/v1/mytrades', data={
@@ -140,10 +138,12 @@ class Bitfinex(Exchange):
         return {Currency[b['currency'].upper()]: float(b['amount']) for b in raw}
 
     def place_order(self, order):
-        return self._signed_post('/v1/order/new', data=self._serialize_order(order))
+        raw = self._signed_post('/v1/order/new', data=self._serialize_order(order))
+        return self._deserialize_order(order.pair, raw)
 
     def place_orders(self, orders):
-        return self._signed_post('/v1/order/new/multi', data={'orders': [self._serialize_order(o) for o in orders]})
+        raw = self._signed_post('/v1/order/new/multi', data={'orders': [self._serialize_order(o) for o in orders]})
+        return [self._deserialize_order(orders[0].pair, o) for o in raw]
 
     def _serialize_order(self, order):
         return {
@@ -154,6 +154,14 @@ class Bitfinex(Exchange):
             'amount': '%.8f' % abs(order.amount),
             'price': '%.5g' % order.price
         }
+
+    def _deserialize_order(self, pair, raw):
+        return Order(
+            pair=pair,  # TODO: Parse pair
+            amount=float(raw['remaining_amount']) * (1 if raw['side'] == 'buy' else -1),
+            price=float(raw['price']),
+            id=raw['id']
+        )
 
     def cancel_order(self, order):
         return self._signed_post('/v1/order/cancel', data={'order_id': order.id})

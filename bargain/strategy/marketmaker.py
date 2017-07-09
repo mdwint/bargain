@@ -26,9 +26,9 @@ class MarketMaker(Strategy):
         def place_order(order):
             if self._dryrun:
                 log.info('Skipping order (dry run): %s', order)
-                return
+                return order
             log.info('Placing order: %s', order)
-            self._exchange.place_order(order)
+            return self._exchange.place_order(order)
 
         def cancel_orders(orders):
             if not orders:
@@ -42,14 +42,12 @@ class MarketMaker(Strategy):
         def place_market_buy():
             ticker = self._exchange.get_ticker(pair)
             buy = Order(pair, trade_amount, price=ticker.ask)
-            place_order(buy)
-            return buy
+            return place_order(buy)
 
         def place_profit_sell(buy):
             sell = Order(pair, -trade_amount, buy.price * profit_scl)
             sell_orders.append(sell)
-            place_order(sell)
-            return sell
+            return place_order(sell)
 
         if not sell_orders:
             buy = place_market_buy()
