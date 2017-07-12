@@ -46,7 +46,7 @@ class MarketMaker(Strategy):
             return place_order(buy)
 
         def place_profit_sell(buy):
-            sell = Order(pair, -trade_amount, buy.price * profit_scl)
+            sell = Order(pair, -buy.amount, buy.price * profit_scl)
             sell_orders.append(sell)
             return place_order(sell)
 
