@@ -9,7 +9,7 @@ class Currency(Enum):
     ETC = auto()
     ZEC = auto()
     XMR = auto()
-    DASH = auto()
+    DSH = auto()
     XRP = auto()
     IOT = auto()
     EOS = auto()
