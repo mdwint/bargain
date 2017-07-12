@@ -52,14 +52,14 @@ class Bitfinex(Exchange):
             raise RuntimeError(body)
         return body
 
-    @retryable(max_attempts=5, wait=0.5)
+    @retryable(max_attempts=5, wait=1)
     def _get(self, path, **kwargs):
         params = kwargs.pop('params', {})
 
         r = requests.get(self._base + path.format(**kwargs), params=params)
         return self._raise_or_return(r)
 
-    @retryable(max_attempts=3, wait=0.5)
+    @retryable(max_attempts=5, wait=1)
     def _signed_post(self, path, **kwargs):
         params = kwargs.pop('params', {})
         form = kwargs.pop('data', {})
