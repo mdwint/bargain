@@ -13,3 +13,4 @@ class Currency(Enum):
     XRP = auto()
     IOT = auto()
     EOS = auto()
+    SAN = auto()
