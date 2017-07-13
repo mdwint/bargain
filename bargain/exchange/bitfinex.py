@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import hmac
 import json
 import logging
+
 import requests
 
 from bargain.charts import Candle
@@ -42,14 +43,14 @@ class Bitfinex(Exchange):
 
     @staticmethod
     def _raise_or_return(r):
+        body = r.json()
+        if 'error' in body and r.status_code // 100 < 4:
+            r.status_code = 400
         try:
             r.raise_for_status()
         except:
-            raise RuntimeError(r.text)
-
-        body = r.json()
-        if 'error' in body:
-            raise RuntimeError(body)
+            log.error(body)
+            raise
         return body
 
     @retryable(max_attempts=5, wait=0.5)

@@ -2,6 +2,8 @@ from datetime import datetime
 import logging
 import time
 
+from requests.exceptions import HTTPError
+
 
 log = logging.getLogger(__name__)
 
@@ -17,8 +19,8 @@ def ms(time):
 def retryable(max_attempts=2, wait=0):
     """This decorator adds a retry mechanism to a function.
 
-    If the function raises an exception, it is caught,
-    and the call is retried for a given number of attempts.
+    If the function raises an HTTPError, the call is retried
+    for a given number of attempts, except for HTTP 4xx errors.
     Exceptions caught during the last attempt are reraised.
 
     Args:
@@ -31,7 +33,9 @@ def retryable(max_attempts=2, wait=0):
             for attempt in range(1, max_attempts + 1):
                 try:
                     return func(*args, **kwargs)
-                except:
+                except HTTPError as e:
+                    if e.response.status_code // 100 == 4:
+                        raise
                     log.warning('Attempt %d failed! %s', attempt, func)
                     if attempt == max_attempts:
                         raise
