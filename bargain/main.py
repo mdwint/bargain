@@ -7,7 +7,9 @@ import yaml
 
 from bargain.exchange.bitfinex import Bitfinex
 from bargain.currency import Currency
+from bargain.indicator import Indicator
 from bargain.strategy.marketmaker import MarketMaker
+from bargain.strategy.technical import TechnicalTrader
 
 
 logging.basicConfig()
@@ -45,9 +47,15 @@ def main(exchange, event, debug=False, dryrun=0):
 
     now = datetime.now(timezone.utc)
     interval = timedelta(minutes=event['interval'])
-
     pair = tuple(Currency[s] for s in event['pair'])
-    m = event['market_maker']
 
-    strategy = MarketMaker(dryrun, exchange, now, interval)
-    strategy.trade(pair, m['trade_amount'], m['profit_pct'], m['buydown_pct'])
+    if 'market_maker' in event:
+        m = event['market_maker']
+        strategy = MarketMaker(dryrun, exchange, now, interval)
+        strategy.trade(pair, m['trade_amount'], m['profit_pct'], m['buydown_pct'])
+    elif 'indicator' in event:
+        indicator = Indicator.from_args(event['indicator'])
+        strategy = TechnicalTrader(dryrun, exchange, now, interval)
+        strategy.trade(indicator, pair, event.get('trade_ratio', 1))
+    else:
+        raise ValueError('Invalid event: %s' % event)

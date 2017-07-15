@@ -1,11 +1,22 @@
 trades:
 - schedule:
-    name: bargain-ether
-    rate: cron(1-59/5 * * * ? *)
+    name: bargain-ETH
+    rate: cron(* * * * ? *)
     input:
       pair: [ETH, USD]
-      interval: 5
-      indicator:
-        crossover:
-          buy:  {alma: {length: 13, offset: 0.85, sigma: 6}}
-          sell: {alma: {length: 49, offset: 0.85, sigma: 6}}
+      interval: 1
+      market_maker:
+        trade_amount: 0.01
+        profit_pct: 1
+        buydown_pct: 0.5
+
+# - schedule:
+#     name: bargain-ETH
+#     rate: cron(1-59/5 * * * ? *)
+#     input:
+#       pair: [ETH, USD]
+#       interval: 5
+#       indicator:
+#         crossover:
+#           buy:  {alma: {length: 13, offset: 0.85, sigma: 6}}
+#           sell: {alma: {length: 49, offset: 0.85, sigma: 6}}

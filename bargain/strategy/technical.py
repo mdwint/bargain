@@ -2,13 +2,15 @@ import logging
 
 from bargain.charts import show_chart
 from bargain.indicator import Signal
+from bargain.indicator.momentum import *
+from bargain.indicator.trend import *
 from bargain.strategy import Strategy
 
 
 log = logging.getLogger(__name__)
 
 
-class Trader(Strategy):
+class TechnicalTrader(Strategy):
 
     def __init__(self, dryrun, exchange, now, interval):
         self._dryrun = dryrun
