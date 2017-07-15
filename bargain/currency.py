@@ -14,3 +14,4 @@ class Currency(Enum):
     IOT = auto()
     EOS = auto()
     SAN = auto()
+    OMG = auto()
