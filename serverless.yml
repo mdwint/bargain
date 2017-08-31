@@ -37,12 +37,10 @@ provider:
 #    variable1: value1
 
 package:
+  exclude:
+  - '**'
   include:
   - bargain/**
-  exclude:
-  - '*__pycache__/**'
-  - config/**
-  - tests/**
 
 functions:
   trade:
