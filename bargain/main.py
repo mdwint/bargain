@@ -8,7 +8,7 @@ import yaml
 from bargain.exchange.bitfinex import Bitfinex
 from bargain.currency import Currency
 from bargain.indicator import Indicator
-from bargain.plots import plot_wallet_balance
+from bargain.plots import plot_portfolio_value
 from bargain.strategy.marketmaker import MarketMaker
 from bargain.strategy.technical import TechnicalTrader
 
@@ -29,7 +29,7 @@ def cli_handler():
     p.add_argument('--secrets', metavar='PATH', default=os.path.join('config', 'secrets.yml'), help='Path to secrets.yml')
     p.add_argument('--schedule', metavar='PATH', default=os.path.join('config', 'schedule.yml'), help='Path to schedule.yml')
     p.add_argument('--trade', metavar='I', type=int, default=0, help='Index of trade in schedule.yml')
-    p.add_argument('--plot', action='store_true', help='Plot wallet balance over time')
+    p.add_argument('--plot', action='store_true', help='Plot portfolio value over time')
     args = p.parse_args()
 
     with open(args.secrets) as f:
@@ -41,12 +41,10 @@ def cli_handler():
     exchange = Bitfinex(**secrets['exchanges']['bitfinex'])
 
     if args.plot:
-        pairs = [tuple(Currency[s] for s in t['schedule']['input']['pair']) for t in schedule['trades']]
-        plot_wallet_balance(exchange, pairs, secrets['plotly'])
-        return
-
-    event = schedule['trades'][args.trade]['schedule']['input']
-    main(exchange, event, args.debug, args.dryrun)
+        plot_portfolio_value(exchange, secrets['plotly'])
+    else:
+        event = schedule['trades'][args.trade]['schedule']['input']
+        main(exchange, event, args.debug, args.dryrun)
 
 
 def main(exchange, event, debug=False, dryrun=0):

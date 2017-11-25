@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import time
 
@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 
 def dt(ms):
-    return datetime.fromtimestamp(ms / 1000)
+    return datetime.fromtimestamp(ms / 1000, timezone.utc)
 
 
 def ms(time):

@@ -130,8 +130,8 @@ class Bitfinex(Exchange):
             'limit_trades': limit
         })
 
-        return [Trade(t['tid'], datetime.fromtimestamp(float(t['timestamp'])),
-                      pair, float(t['amount']) * (1 if t['type'] == 'Buy' else -1),
+        return [Trade(t['tid'], dt(float(t['timestamp']) * 1000), pair,
+                      float(t['amount']) * (1 if t['type'] == 'Buy' else -1),
                       float(t['price']), float(t['fee_amount'])) for t in raw]
 
     def get_wallet_balances(self):
