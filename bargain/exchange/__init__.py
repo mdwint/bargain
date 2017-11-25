@@ -44,9 +44,10 @@ class Order:
 
 class Trade(Order):
 
-    def __init__(self, id, timestamp, pair, amount, price):
+    def __init__(self, id, timestamp, pair, amount, price, fee_amount=0):
         super().__init__(pair, amount, price, id)
         self.timestamp = timestamp
+        self.fee_amount = fee_amount
 
     def __eq__(self, other):
         if isinstance(other, Trade):

@@ -132,7 +132,7 @@ class Bitfinex(Exchange):
 
         return [Trade(t['tid'], datetime.fromtimestamp(float(t['timestamp'])),
                       pair, float(t['amount']) * (1 if t['type'] == 'Buy' else -1),
-                      float(t['price'])) for t in raw]
+                      float(t['price']), float(t['fee_amount'])) for t in raw]
 
     def get_wallet_balances(self):
         raw = self._signed_post('/v1/balances')

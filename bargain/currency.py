@@ -16,3 +16,4 @@ class Currency(Enum):
     SAN = auto()
     OMG = auto()
     NEO = auto()
+    BCH = auto()
