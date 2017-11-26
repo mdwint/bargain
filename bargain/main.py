@@ -8,7 +8,7 @@ import yaml
 from bargain.currency import Currency
 from bargain.exchange.bitfinex import Bitfinex
 from bargain.indicator import Indicator
-from bargain.plots import plot_portfolio_value
+from bargain.plots import plot_all
 from bargain.strategy.marketmaker import MarketMaker
 from bargain.strategy.technical import TechnicalTrader
 
@@ -41,7 +41,7 @@ def cli_handler():
     exchange = Bitfinex(**secrets['exchanges']['bitfinex'])
 
     if args.plot:
-        plot_portfolio_value(exchange)
+        plot_all(exchange)
     else:
         event = schedule['trades'][args.trade]['schedule']['input']
         main(exchange, event, args.debug, args.dryrun)

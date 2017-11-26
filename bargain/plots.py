@@ -13,7 +13,7 @@ from bargain.exchange.bitfinex import Bitfinex
 def serverless_handler(event, context):
     exchange = Bitfinex(os.environ['BITFINEX_API_KEY'], os.environ['BITFINEX_API_SECRET'])
     py.sign_in(os.environ['PLOTLY_USERNAME'], os.environ['PLOTLY_API_KEY'])
-    plot_portfolio_value(exchange)
+    plot_all(exchange)
 
 
 def round_to_minute(time):
@@ -41,8 +41,6 @@ class PriceHistory:
             if candles:
                 cache.update({c.time: c.close for c in candles})
                 cache[key] = candles[-1].close if candles else 0
-                for c in candles[-3:]:
-                    print('%s: %s' % (c.time, c.close))
             else:
                 # Currency was not available yet
                 self.cache[pair] = None
@@ -78,7 +76,7 @@ class Portfolio:
         self.balances[b] += trade.cost
 
         c = a if trade.is_buy else b
-        self.balances[c] += trade.fee_amount
+        self.balances[c] += trade.fee
 
     def get_value(self, time):
         value = self.balances[self.target]
@@ -91,31 +89,40 @@ class Portfolio:
         return value
 
 
-def plot_portfolio_value(exchange, history=timedelta(days=30), interval=timedelta(hours=1)):
+def plot_scatter(title, series, unit):
+    scatter = go.Scatter(x=[x for x, _ in series],
+                         y=[y for _, y in series])
+
+    layout = go.Layout(title=title, yaxis={
+        'title': unit.name,
+        'range': [0, max(scatter.y) * 1.5],
+    })
+
+    data = go.Data([scatter])
+    fig = go.Figure(data=data, layout=layout)
+
+    filename = '-'.join(['bargain'] + title.split()).lower()
+    url = py.plot(fig, filename=filename, auto_open=False)
+    print(title + ': ' + url)
+
+
+def plot_all(exchange, history=timedelta(days=30), interval=timedelta(hours=1)):
     until = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
     since = until - history
 
     prices = PriceHistory(exchange, interval)
     portfolio = Portfolio(exchange, prices)
     trades = portfolio.get_trades(since, until)
-    series = [(until, portfolio.get_value(until))]
 
-    for time in (until - interval * i for i in range(history // interval)):
-        if trades and time <= round_to_minute(trades[0].timestamp):
-            portfolio.undo_trade(trades.pop(0))
+    def plot_portfolio_value():
+        series = [(until, portfolio.get_value(until))]
 
-        series.append((time, portfolio.get_value(time)))
-        print('%s: %s' % series[-1])
+        for time in (until - interval * i for i in range(history // interval)):
+            if trades and time <= round_to_minute(trades[0].timestamp):
+                portfolio.undo_trade(trades.pop(0))
 
-    scatter = go.Scatter(x=[x for x, _ in series],
-                         y=[y for _, y in series])
+            series.append((time, portfolio.get_value(time)))
 
-    data = go.Data([scatter])
-    layout = go.Layout(title='Portfolio value', yaxis={
-        'title': portfolio.target.name,
-        'range': [0, max(scatter.y) * 1.5],
-    })
+        plot_scatter('Portfolio value', series, unit=portfolio.target)
 
-    fig = go.Figure(data=data, layout=layout)
-    url = py.plot(fig, filename='bargain', auto_open=False)
-    print(url)
+    plot_portfolio_value()
