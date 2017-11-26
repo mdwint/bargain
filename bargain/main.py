@@ -3,6 +3,7 @@ import logging
 import os
 from datetime import datetime, timedelta, timezone
 
+import ccxt
 import yaml
 
 from bargain.currency import Currency
@@ -38,7 +39,7 @@ def cli_handler():
     with open(args.schedule) as f:
         schedule = yaml.safe_load(f)
 
-    exchange = Bitfinex(**secrets['exchanges']['bitfinex'])
+    exchange = ccxt.bitfinex(secrets['exchanges']['bitfinex'])
 
     if args.plot:
         plot_all(exchange)

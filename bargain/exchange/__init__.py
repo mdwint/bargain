@@ -5,6 +5,10 @@ from collections import namedtuple
 Ticker = namedtuple('Ticker', 'bid, ask')
 
 
+def to_symbol(pair):
+    return '/'.join(c.name for c in pair)
+
+
 class Order:
 
     def __init__(self, pair, amount, price=None, id=None):
@@ -24,6 +28,10 @@ class Order:
     @property
     def cost(self):
         return self.amount * self.price
+
+    def to_ccxt(self, type):
+        side = 'buy' if self.is_buy else 'sell'
+        return [to_symbol(self.pair), type, side, abs(self.amount), self.price]
 
     def __repr__(self):
         return '%s %.8f %s @ %.5g %s' % ('BUY' if self.is_buy else 'SELL',

@@ -1,6 +1,6 @@
 import logging
 
-from bargain.exchange import Order
+from bargain.exchange import Order, to_symbol
 from bargain.strategy import Strategy
 
 
@@ -16,19 +16,20 @@ class MarketMaker(Strategy):
         self._interval = interval
 
     def trade(self, pair, trade_amount, profit_pct, buydown_pct):
-        orders = self._exchange.get_active_orders(pair)
-        sell_orders = [o for o in orders if o.is_sell]
-        buy_orders = [o for o in orders if o.is_buy]
+        symbol = to_symbol(pair)
+        orders = self._exchange.fetch_open_orders(symbol)
+        sell_orders = [o for o in orders if o['side'] == 'sell']
+        buy_orders = [o for o in orders if o['side'] == 'buy']
 
         profit_scl = (100 + profit_pct) / 100
         buydown_scl = (100 - buydown_pct) / 100
 
-        def place_order(order):
+        def place_order(order, type='limit'):
             if self._dryrun:
                 log.info('Skipping order (dry run): %s', order)
                 return order
             log.info('Placing order: %s', order)
-            return self._exchange.place_order(order)
+            return self._exchange.create_order(*order.to_ccxt(type))
 
         def cancel_orders(orders):
             if not orders:
@@ -37,16 +38,17 @@ class MarketMaker(Strategy):
                 log.info('Skipping cancel (dry run): %s', orders)
                 return
             log.info('Cancel orders: %s', orders)
-            self._exchange.cancel_orders(orders)
+            for order in orders:
+                self._exchange.cancel_order(orders['id'])
 
         def place_market_buy():
             buy = Order(pair, trade_amount)
             if self._dryrun:
-                buy.price = self._exchange.get_ticker(pair).ask
-            return place_order(buy)
+                buy.price = self._exchange.fetch_ticker(symbol).ask
+            return place_order(buy, type='market')
 
         def place_profit_sell(buy):
-            sell = Order(pair, -buy.amount, buy.price * profit_scl)
+            sell = Order(pair, -buy['amount'], buy['price'] * profit_scl)
             sell_orders.append(sell)
             return place_order(sell)
 
@@ -54,7 +56,7 @@ class MarketMaker(Strategy):
             buy = place_market_buy()
             place_profit_sell(buy)
         elif not buy_orders:
-            buy = self._get_last_buy(pair) or place_market_buy()
+            buy = self._get_last_buy(symbol) or place_market_buy()
             place_profit_sell(buy)
 
         min_sell_price = min(o.price for o in sell_orders)
@@ -64,13 +66,12 @@ class MarketMaker(Strategy):
             cancel_orders(buy_orders)
             place_order(buydown)
 
-    def _get_last_buy(self, pair):
-        until = self._now
-        since = until - self._interval * 2
-        past_trades = self._exchange.get_past_trades(pair, since, until)
-        log.debug('Past trades: %s', past_trades)
+    def _get_last_buy(self, symbol):
+        since = self._now - self._interval * 2
+        trades = self._exchange.fetch_trades(symbol, since)
+        log.debug('Past trades: %s', trades)
 
         try:
-            return [t for t in past_trades if t.is_buy][-1]
+            return [t for t in trades if t['side'] == 'buy'][-1]
         except IndexError:
             return None
