@@ -5,6 +5,7 @@ import os
 
 import plotly.graph_objs as go
 import plotly.plotly as py
+import requests
 
 from bargain.currency import Currency
 from bargain.exchange.bitfinex import Bitfinex
@@ -18,6 +19,15 @@ def serverless_handler(event, context):
 
 def round_to_minute(time):
     return time.replace(second=0, microsecond=0)
+
+
+def get_conversion_rate(base, target):
+    r = requests.get('https://api.fixer.io/latest', params={
+        'base': base, 'symbols': target
+    })
+
+    r.raise_for_status()
+    return r.json()['rates'][target]
 
 
 class PriceHistory:
@@ -51,16 +61,17 @@ class PriceHistory:
 
 class Portfolio:
 
-    def __init__(self, exchange, prices):
+    def __init__(self, exchange, prices, target):
         self.exchange = exchange
         self.prices = prices
+        self.base = Currency.USD
+        self.conversion_rate = get_conversion_rate(self.base.name, target)
         self.balances = exchange.get_wallet_balances()
-        self.target = Currency.USD
 
     @property
     def pairs(self):
-        return ((currency, self.target) for currency, balance in self.balances.items()
-                if currency != self.target and balance > 0.001)
+        return ((currency, self.base) for currency, balance in self.balances.items()
+                if currency != self.base and balance > 0.001)
 
     def get_trades(self, since, until):
         trades = []
@@ -79,14 +90,14 @@ class Portfolio:
         self.balances[c] += trade.fee
 
     def get_value(self, time):
-        value = self.balances[self.target]
+        value = self.balances[self.base]
 
         for pair in self.pairs:
             amount = self.balances[pair[0]]
             price = self.prices.get(pair, time)
             value += amount * price
 
-        return value
+        return value * self.conversion_rate
 
 
 def to_scatter(series, **kwargs):
@@ -97,7 +108,7 @@ def to_scatter(series, **kwargs):
 
 def plot_scatter(title, scatters, unit):
     layout = go.Layout(title=title, yaxis={
-        'title': unit.name,
+        'title': unit,
         'range': [-100, max(scatters[0].y) * 1.5],
     })
 
@@ -109,12 +120,12 @@ def plot_scatter(title, scatters, unit):
     print(title + ': ' + url)
 
 
-def plot_all(exchange, history=timedelta(days=30), interval=timedelta(hours=1)):
+def plot_all(exchange, unit='EUR', history=timedelta(days=30), interval=timedelta(hours=1)):
     until = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
     since = until - history
 
     prices = PriceHistory(exchange, interval)
-    portfolio = Portfolio(exchange, prices)
+    portfolio = Portfolio(exchange, prices, target=unit)
     trades = portfolio.get_trades(since, until)
 
     def plot_portfolio_value():
@@ -130,8 +141,7 @@ def plot_all(exchange, history=timedelta(days=30), interval=timedelta(hours=1)):
                 portfolio.undo_trade(trade)
                 trades.remove(trade)
 
-            value = portfolio.get_value(time)
-            values.append((time, value))
+            values.append((time, portfolio.get_value(time)))
 
         scatters = [
             to_scatter(values, name='Value', showlegend=False),
@@ -139,6 +149,6 @@ def plot_all(exchange, history=timedelta(days=30), interval=timedelta(hours=1)):
             to_scatter(sells, name='Sell', mode='markers', marker={'color': 'red'}),
         ]
 
-        plot_scatter('Portfolio value', scatters, unit=portfolio.target)
+        plot_scatter('Portfolio value', scatters, unit)
 
     plot_portfolio_value()
