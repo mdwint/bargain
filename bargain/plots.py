@@ -89,16 +89,19 @@ class Portfolio:
         return value
 
 
-def plot_scatter(title, series, unit):
-    scatter = go.Scatter(x=[x for x, _ in series],
-                         y=[y for _, y in series])
+def to_scatter(series, **kwargs):
+    return go.Scatter(x=[x for x, _ in series],
+                      y=[y for _, y in series],
+                      **kwargs)
 
+
+def plot_scatter(title, scatters, unit):
     layout = go.Layout(title=title, yaxis={
         'title': unit.name,
-        'range': [0, max(scatter.y) * 1.5],
+        'range': [-100, max(scatters[0].y) * 1.5],
     })
 
-    data = go.Data([scatter])
+    data = go.Data(scatters)
     fig = go.Figure(data=data, layout=layout)
 
     filename = '-'.join(['bargain'] + title.split()).lower()
@@ -115,14 +118,27 @@ def plot_all(exchange, history=timedelta(days=30), interval=timedelta(hours=1)):
     trades = portfolio.get_trades(since, until)
 
     def plot_portfolio_value():
-        series = [(until, portfolio.get_value(until))]
+        values = [(until, portfolio.get_value(until))]
+        buys = []
+        sells = []
 
         for time in (until - interval * i for i in range(history // interval)):
-            if trades and time <= round_to_minute(trades[0].timestamp):
-                portfolio.undo_trade(trades.pop(0))
+            for trade in (t for t in trades if time <= round_to_minute(t.timestamp)):
+                actions = buys if trade.is_buy else sells
+                actions.append((trade.timestamp, abs(trade.cost)))
 
-            series.append((time, portfolio.get_value(time)))
+                portfolio.undo_trade(trade)
+                trades.remove(trade)
 
-        plot_scatter('Portfolio value', series, unit=portfolio.target)
+            value = portfolio.get_value(time)
+            values.append((time, value))
+
+        scatters = [
+            to_scatter(values, name='Value', showlegend=False),
+            to_scatter(buys, name='Buy', mode='markers', marker={'color': 'green'}),
+            to_scatter(sells, name='Sell', mode='markers', marker={'color': 'red'}),
+        ]
+
+        plot_scatter('Portfolio value', scatters, unit=portfolio.target)
 
     plot_portfolio_value()
