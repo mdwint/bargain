@@ -5,8 +5,8 @@ from datetime import datetime, timedelta, timezone
 
 import yaml
 
-from bargain.exchange.bitfinex import Bitfinex
 from bargain.currency import Currency
+from bargain.exchange.bitfinex import Bitfinex
 from bargain.indicator import Indicator
 from bargain.plots import plot_portfolio_value
 from bargain.strategy.marketmaker import MarketMaker
@@ -41,7 +41,7 @@ def cli_handler():
     exchange = Bitfinex(**secrets['exchanges']['bitfinex'])
 
     if args.plot:
-        plot_portfolio_value(exchange, secrets['plotly'])
+        plot_portfolio_value(exchange)
     else:
         event = schedule['trades'][args.trade]['schedule']['input']
         main(exchange, event, args.debug, args.dryrun)

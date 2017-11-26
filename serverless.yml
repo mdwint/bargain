@@ -16,25 +16,9 @@ provider:
   stage: prod
   region: eu-west-1
 
-# you can add statements to the Lambda function's IAM Role here
-#  iamRoleStatements:
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:ListBucket"
-#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:PutObject"
-#      Resource:
-#        Fn::Join:
-#          - ""
-#          - - "arn:aws:s3:::"
-#            - "Ref" : "ServerlessDeploymentBucket"
-#            - "/*"
-
-# you can define service wide environment variables here
-#  environment:
-#    variable1: value1
+  environment:
+    BITFINEX_API_KEY: ${self:custom.secrets.exchanges.bitfinex.api_key}
+    BITFINEX_API_SECRET: ${self:custom.secrets.exchanges.bitfinex.api_secret}
 
 package:
   exclude:
@@ -45,44 +29,13 @@ package:
 functions:
   trade:
     handler: bargain/main.serverless_handler
-    environment:
-      BITFINEX_API_KEY: ${self:custom.secrets.exchanges.bitfinex.api_key}
-      BITFINEX_API_SECRET: ${self:custom.secrets.exchanges.bitfinex.api_secret}
     events: ${self:custom.schedule.trades}
 
-#    The following are a few example events you can configure
-#    NOTE: Please make sure to change your handler code to work with those events
-#    Check the event documentation for details
-#    events:
-#      - http:
-#          path: users/create
-#          method: get
-#      - s3: ${env:BUCKET}
-#      - schedule: rate(10 minutes)
-#      - sns: greeter-topic
-#      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
-#      - alexaSkill
-#      - iot:
-#          sql: "SELECT * FROM 'some_topic'"
-#      - cloudwatchEvent:
-#          event:
-#            source:
-#              - "aws.ec2"
-#            detail-type:
-#              - "EC2 Instance State-change Notification"
-#            detail:
-#              state:
-#                - pending
-#      - cloudwatchLog: '/aws/lambda/hello'
-
-# you can add CloudFormation resource templates here
-#resources:
-#  Resources:
-#    NewResource:
-#      Type: AWS::S3::Bucket
-#      Properties:
-#        BucketName: my-new-bucket
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"
+  plot:
+    handler: bargain/plots.serverless_handler
+    environment:
+      PLOTLY_USERNAME: ${self:custom.secrets.plotly.username}
+      PLOTLY_API_KEY: ${self:custom.secrets.plotly.api_key}
+    events:
+    - name: bargain-plot
+      rate: cron(0 * * * ? *)

@@ -1,13 +1,19 @@
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from operator import attrgetter
-from time import sleep
+import os
 
-import plotly
-import plotly.plotly as py
 import plotly.graph_objs as go
+import plotly.plotly as py
 
 from bargain.currency import Currency
+from bargain.exchange.bitfinex import Bitfinex
+
+
+def serverless_handler(event, context):
+    exchange = Bitfinex(os.environ['BITFINEX_API_KEY'], os.environ['BITFINEX_API_SECRET'])
+    py.sign_in(os.environ['PLOTLY_USERNAME'], os.environ['PLOTLY_API_KEY'])
+    plot_portfolio_value(exchange)
 
 
 def round_to_minute(time):
@@ -30,9 +36,7 @@ class PriceHistory:
             return 0
 
         if key not in cache:
-            candles = self.exchange.get_candles(pair, self.interval,
-                now=time + self.interval, limit=self.batch_size)
-            sleep(1)
+            candles = self.exchange.get_candles(pair, self.interval, now=time + self.interval, limit=self.batch_size)
 
             if candles:
                 cache.update({c.time: c.close for c in candles})
@@ -87,9 +91,7 @@ class Portfolio:
         return value
 
 
-def plot_portfolio_value(exchange, secrets, history=timedelta(days=30), interval=timedelta(hours=1)):
-    plotly.tools.set_credentials_file(**secrets)
-
+def plot_portfolio_value(exchange, history=timedelta(days=30), interval=timedelta(hours=1)):
     until = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
     since = until - history
 
@@ -115,4 +117,5 @@ def plot_portfolio_value(exchange, secrets, history=timedelta(days=30), interval
     })
 
     fig = go.Figure(data=data, layout=layout)
-    py.plot(fig, filename='bargain')
+    url = py.plot(fig, filename='bargain', auto_open=False)
+    print(url)
