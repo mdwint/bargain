@@ -33,6 +33,7 @@ functions:
 
   plot:
     handler: bargain/plots.serverless_handler
+    timeout: 30
     environment:
       PLOTLY_USERNAME: ${self:custom.secrets.plotly.username}
       PLOTLY_API_KEY: ${self:custom.secrets.plotly.api_key}
